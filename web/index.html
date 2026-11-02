@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>WhiteMoon Energía · Red eléctrica de España</title>
+<meta name="description" content="Panel informativo de la energía en España: demanda, generación, alertas de apagón y caso histórico del 28-A. Datos de Red Eléctrica (REData) y medios.">
+<style>
+:root{--bg:#0a1018;--card:#101b28;--card2:#0c141d;--line:#1f3044;--txt:#e6eef7;--mut:#8da2b8;--ok:#3fd99a;--warn:#f0b43c;--bad:#e5484d;--acc:#4da3ff}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--txt);font:15px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+body{padding:14px;max-width:1180px;margin:0 auto;display:flex;flex-direction:column;gap:14px;overflow-x:hidden}
+header{display:flex;flex-wrap:wrap;align-items:center;gap:10px 16px;padding:14px 18px;border:1px solid var(--line);border-radius:16px;background:linear-gradient(90deg,#101b28,#0c141d)}
+header h1{margin:0;font-size:19px;letter-spacing:.04em}header h1 b{color:var(--warn)}
+header .sub{color:var(--mut);font-size:12.5px;flex:1 1 260px}
+.pill{padding:3px 11px;border-radius:99px;border:1px solid var(--line);font-size:12px;color:var(--mut)}
+#banner{display:none;gap:12px;align-items:center;padding:12px 16px;border-radius:14px;background:linear-gradient(90deg,#8d1320,#c11a2b);border:1px solid #ff6b76;color:#fff;font-weight:700;box-shadow:0 0 22px #d6182a66}
+#banner .ei{font-size:26px;animation:pl 1.4s ease-in-out infinite}#banner small{display:block;font-weight:400;opacity:.92;font-size:12.5px}
+@keyframes pl{50%{opacity:.6}}
+.panel{border:1px solid var(--line);border-radius:16px;background:var(--card2);padding:14px 16px}
+.panel h2{margin:0 0 10px;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--mut);font-weight:700}
+.grid{display:grid;gap:12px}.g2{grid-template-columns:1fr 1fr}.g5{grid-template-columns:repeat(5,minmax(0,1fr))}
+.card{border:1px solid var(--line);border-radius:14px;background:linear-gradient(90deg,var(--card),var(--card2));padding:12px 14px;min-width:0}
+.card small{color:var(--mut);display:block}.card .big{font-size:26px;font-weight:800;line-height:1.15}
+.card.bad{border-color:#b3202c;background:#2a0d12}
+.unit{font-size:13px;font-weight:600;color:var(--mut);margin-left:4px}
+.al{display:grid;grid-template-columns:44px 1fr auto;gap:2px 12px;align-items:center;padding:11px 14px;border:1px solid var(--line);border-left-width:4px;border-radius:14px;margin:8px 0;background:linear-gradient(90deg,#101b28,#0c141d)}
+.al .ic{grid-row:1/3;width:44px;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px;background:#4a2c12}
+.al b{font-size:15px;grid-column:2}.al small{grid-column:2;color:var(--mut);font-size:12.5px}
+.al .sv{grid-column:3;grid-row:1;padding:2px 10px;border-radius:99px;font-weight:800;font-size:11px;background:#7a3d10;color:#ffd9b0;text-transform:uppercase}
+.al.red{border-color:#b3202c;border-left-color:var(--bad);background:linear-gradient(90deg,#3a0f15,#1a0b10 70%)}.al.red .ic{background:#d6182a;animation:pl 1.6s ease-in-out infinite}.al.red b{color:#ffd6d9;font-size:16px}.al.red .sv{background:#d6182a;color:#fff}
+.al a{color:var(--acc);text-decoration:none;font-weight:600}
+.ok{color:var(--ok)}.empty{color:var(--ok);padding:6px 0}
+.mix{display:flex;height:26px;border-radius:8px;overflow:hidden;margin:8px 0 12px;background:#0a1018}
+.mix i{display:block;height:100%}
+.legend{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:6px 14px;font-size:13px}
+.legend div{display:flex;align-items:center;gap:8px;min-width:0}.legend i{width:11px;height:11px;border-radius:3px;flex:none}.legend span{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.legend em{font-style:normal;color:var(--mut)}
+svg{display:block;width:100%;height:auto}
+.axis{fill:var(--mut);font-size:13px}
+.causes{margin:8px 0 0;padding-left:20px}.causes li{margin:4px 0}
+.note{color:var(--mut);font-size:12.5px}.note a,footer a{color:var(--acc)}
+.seg{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 10px}.seg button{padding:4px 11px;border-radius:99px;border:1px solid var(--line);background:transparent;color:var(--mut);cursor:pointer;font-size:12.5px}.seg button.on{background:#12304f;border-color:#2b6cb0;color:#cfe6ff}
+footer{color:var(--mut);font-size:12px;padding:4px 6px 18px}
+@media(max-width:860px){.g5{grid-template-columns:repeat(2,minmax(0,1fr))}.g2{grid-template-columns:1fr}}
+@media(max-width:560px){body{padding:8px;gap:10px}header{padding:10px 12px}.card .big{font-size:22px}
+ .al{grid-template-columns:38px 1fr;padding:10px 11px}.al .ic{width:38px;height:38px;font-size:19px}.al .sv{grid-column:2;grid-row:auto;justify-self:start;margin-bottom:3px}
+ #banner{padding:9px 12px}#banner .ei{font-size:22px}.legend{grid-template-columns:1fr 1fr}}
+</style>
+</head>
+<body>
+<header>
+  <h1>WHITEMOON · <b>ENERGÍA</b> ESPAÑA</h1>
+  <div class="sub">Panel informativo de la red eléctrica: demanda, generación y alertas de apagón. No es un aviso oficial.</div>
+  <span class="pill" id="upd">cargando…</span>
+</header>
+<div id="banner" role="alert"></div>
+
+<section class="panel"><h2>Alertas de apagón</h2><div id="alerts"></div>
+  <div class="note">Detectadas a partir de titulares de medios (Google Noticias). Sin confirmar por el operador eléctrico. Red Eléctrica no publica a tiempo datos por isla o comarca.</div></section>
+
+<section class="grid g2">
+  <div class="panel"><h2>Península · demanda en tiempo real</h2><div id="rt"></div></div>
+  <div class="panel"><h2>Sistemas eléctricos · demanda diaria</h2><div class="grid g2" id="sys" style="grid-template-columns:repeat(2,minmax(0,1fr))"></div><div class="note" id="sysnote"></div></div>
+</section>
+
+<section class="panel"><h2>Generación peninsular <span id="gdate" style="text-transform:none;letter-spacing:0"></span></h2><div id="gen"></div></section>
+<section class="panel"><h2>Demanda peninsular · últimos 30 días</h2><div id="hist"></div></section>
+<section class="panel" id="case"><h2>Caso histórico · apagón del 28 de abril de 2025</h2><div id="casebox">Cargando…</div></section>
+
+<footer>
+  Fuentes: Red Eléctrica de España, <a href="https://www.ree.es/es/datos/apidatos" target="_blank" rel="noopener">REData</a> (demanda y generación; Canarias, Baleares, Ceuta y Melilla solo con datos diarios y retraso) · titulares de medios vía Google Noticias (solo título, medio y enlace) · informe de ENTSO-E sobre el 28-A según Agencia SINC.
+  Informativo, no certificado, solo datos públicos. No sustituye a los avisos de Red Eléctrica, Protección Civil ni de los operadores.
+</footer>
+
+<script>
+'use strict';
+const $=id=>document.getElementById(id);
+const NS='http://www.w3.org/2000/svg';
+function h(tag,cls,txt,kids){const e=document.createElement(tag);if(cls)e.className=cls;if(txt!=null)e.textContent=txt;(kids||[]).forEach(k=>k&&e.appendChild(k));return e}
+function sv(tag,attrs,txt){const e=document.createElementNS(NS,tag);for(const k in attrs)e.setAttribute(k,attrs[k]);if(txt!=null)e.textContent=txt;return e}
+const fmt=n=>n==null?'—':Math.round(n).toLocaleString('es-ES');
+const pct=(d,dec)=>d==null?'':(d>=0?'+':'')+(d*100).toFixed(dec==null?1:dec).replace('.',',')+' %';
+const dm=s=>s?s.slice(8,10)+'/'+s.slice(5,7):'';
+const ICO={energia:'⚡','red-electrica':'⚡'};
+
+function renderAlerts(list){
+  const red=list.filter(a=>a.sev==='muy alta'),box=$('alerts'),b=$('banner');
+  if(red.length){b.style.display='flex';b.replaceChildren(h('span','ei','⚡'),h('div',null,null,[document.createTextNode('ALERTA DE ENERGÍA · '+red.map(a=>(a.place||a.title)).join(', ')),h('small',null,'Posible apagón detectado por titulares de medios. Sin confirmar por el operador eléctrico.')]));b.onclick=()=>$('alerts').scrollIntoView({behavior:'smooth',block:'center'})}else b.style.display='none';
+  box.replaceChildren(...(list.length?list.map(a=>{const r=a.sev==='muy alta',d=h('div','al'+(r?' red':''),null,[h('span','ic',ICO[a.type]||'⚡'),h('span','sv',r?'Alerta roja':a.sev),h('b',null,a.title),h('small',null,a.detail)]);
+    if(a.links&&a.links[0]&&/^https?:\/\//.test(a.links[0])){const l=h('a',null,' Ver titular ›');l.href=a.links[0];l.target='_blank';l.rel='noopener noreferrer';d.lastChild.appendChild(l)}return d}):[h('div','empty','✓ Sin apagones detectados en las últimas horas.')]));
+}
+
+function line(vals,w,hh,opts){opts=opts||{};const mx=opts.max||Math.max(...vals.filter(v=>v!=null),1),n=vals.length,pad=4;
+  const pts=vals.map((v,i)=>v==null?null:[pad+i*(w-2*pad)/Math.max(1,n-1),hh-pad-(v/mx)*(hh-2*pad)]).filter(Boolean);
+  return {mx,path:pts.map((p,i)=>(i?'L':'M')+p[0].toFixed(1)+' '+p[1].toFixed(1)).join(' '),pts}}
+
+function renderRT(r){const b=$('rt');if(!r){b.replaceChildren(h('div','note','Sin lectura en tiempo real todavía.'));return}
+  const bad=r.deviation!=null&&r.deviation<=-0.1;
+  const top=h('div',null,null,[h('div','big',null,[document.createTextNode(fmt(r.mw)),h('span','unit','MW')]),h('small',null,(r.deviation==null?'':pct(r.deviation)+' vs previsión · ')+'lectura '+r.at.slice(11,16))]);
+  if(bad)top.style.color='#ff9aa0';
+  const W=520,H=120,real=r.history.map(x=>x.real),fc=r.history.map(x=>x.forecast),mx=Math.max(...real,...fc.filter(Boolean),1);
+  const s=sv('svg',{viewBox:'0 0 '+W+' '+H,role:'img','aria-label':'Demanda real y prevista de hoy'});
+  const L1=line(fc,W,H,{max:mx}),L2=line(real,W,H,{max:mx});
+  s.append(sv('path',{d:L1.path,fill:'none',stroke:'#8da2b8','stroke-width':1.5,'stroke-dasharray':'4 3'}),sv('path',{d:L2.path,fill:'none',stroke:'#4da3ff','stroke-width':2.2}));
+  b.replaceChildren(top,s,h('div','note','Línea azul: real · discontinua: prevista. Fuente: REData (península).'))}
+
+function renderSys(sys,status){const b=$('sys');const ks=Object.keys(sys||{});
+  b.replaceChildren(...ks.map(k=>{const x=sys[k],bad=x.deviation!=null&&x.deviation<=-0.25,c=h('div','card'+(bad?' bad':''),null,[h('small',null,x.name),h('div','big',null,[document.createTextNode(fmt(x.mwh)),h('span','unit','MWh')]),h('small',null,dm(x.date)+(x.deviation==null?'':' · '+pct(x.deviation,0)+' vs media'))]);return c}));
+  $('sysnote').textContent=ks.length?'Demanda diaria con retraso de publicación (1–3 días). Un apagón insular no se ve aquí a tiempo.':'Sin datos de sistemas todavía.';
+  if(!ks.length)b.replaceChildren()}
+
+function renderGen(g){const b=$('gen');if(!g){b.replaceChildren(h('div','note','Sin datos de generación todavía.'));return}
+  $('gdate').textContent='· '+dm(g.date)+' · '+fmt(g.total_mwh)+' MWh';
+  const bar=h('div','mix');g.items.forEach(i=>{const e=h('i');e.style.cssText='width:'+(i.mwh/g.total_mwh*100)+'%;background:'+(/^#[0-9a-f]{3,8}$/i.test(i.color||'')?i.color:'#888');e.title=i.name+': '+fmt(i.mwh)+' MWh';bar.appendChild(e)});
+  const lg=h('div','legend');g.items.forEach(i=>{const d=h('div',null,null,[h('i'),h('span',null,i.name),h('em',null,(i.mwh/g.total_mwh*100).toFixed(1).replace('.',',')+' %')]);d.firstChild.style.background=/^#[0-9a-f]{3,8}$/i.test(i.color||'')?i.color:'#888';lg.appendChild(d)});
+  const k=h('div','card',null,[h('small',null,'Renovable'),h('div','big ok',(g.renewable_pct*100).toFixed(1).replace('.',',')+' %')]);k.style.maxWidth='220px';
+  b.replaceChildren(k,bar,lg)}
+
+function renderHist(hst){const b=$('hist');if(!hst||!hst.length){b.replaceChildren(h('div','note','Sin histórico todavía.'));return}
+  const W=700,H=140,mx=Math.max(...hst.map(x=>x.mwh)),bw=(W-8)/hst.length;
+  const s=sv('svg',{viewBox:'0 0 '+W+' '+(H+16),role:'img','aria-label':'Demanda diaria de los últimos 30 días'});
+  hst.forEach((x,i)=>{const bh=Math.max(2,x.mwh/mx*H);const r=sv('rect',{x:4+i*bw+1,y:H-bh,width:Math.max(1,bw-2),height:bh,rx:2,fill:'#4da3ff',opacity:.85});r.appendChild(sv('title',{},dm(x.date)+': '+fmt(x.mwh)+' MWh'));s.appendChild(r)});
+  s.append(sv('text',{x:4,y:H+13,class:'axis'},dm(hst[0].date)),sv('text',{x:W-4,y:H+13,class:'axis','text-anchor':'end'},dm(hst[hst.length-1].date)));
+  b.replaceChildren(s,h('div','note','MWh por día, sistema peninsular. Fuente: REData.'))}
+
+function renderCase(c){const b=$('casebox');if(!c){b.textContent='No disponible.';return}
+  const v=c.demand.values,W=700,H=170,mx=Math.max(...v);
+  const s=sv('svg',{viewBox:'0 0 '+W+' '+(H+20),role:'img','aria-label':'Demanda horaria el 28 y 29 de abril de 2025'});
+  const L=line(v,W,H,{max:mx});
+  s.append(sv('path',{d:L.path+' L'+L.pts[L.pts.length-1][0]+' '+H+' L'+L.pts[0][0]+' '+H+'Z',fill:'#e5484d',opacity:.18}),sv('path',{d:L.path,fill:'none',stroke:'#e5484d','stroke-width':2.2}));
+  const cx=L.pts[12][0];s.append(sv('line',{x1:cx,x2:cx,y1:0,y2:H,stroke:'#f0b43c','stroke-dasharray':'4 3'}),sv('text',{x:cx+6,y:14,class:'axis',fill:'#f0b43c'},'~12:30 · colapso'));
+  [[0,'28 abr 00h'],[24,'29 abr 00h'],[47,'23h']].forEach(([i,t])=>s.appendChild(sv('text',{x:L.pts[i][0],y:H+14,class:'axis','text-anchor':i===47?'end':i===0?'start':'middle'},t)));
+  const ul=h('ul','causes');c.causes.forEach(t=>ul.appendChild(h('li',null,t)));
+  const links=h('div','note');c.links.forEach((l,i)=>{if(i)links.appendChild(document.createTextNode(' · '));const a=h('a',null,l.t);a.href=l.u;a.target='_blank';a.rel='noopener noreferrer';links.appendChild(a)});
+  b.replaceChildren(h('p',null,c.summary),s,h('div','note',c.demand.unit+' · '+c.demand.source),h('h2',null,'Qué falló'),h('div','note',c.causes_note),ul,h('div','note',c.not_verified),links)}
+
+async function j(u){const r=await fetch(u,{cache:'no-store'});if(!r.ok)throw new Error(r.status);return r.json()}
+async function load(){try{const d=await j('/api/resumen');renderAlerts(d.alerts||[]);renderRT(d.realtime);renderSys(d.systems);renderGen(d.generation);renderHist(d.history);
+  $('upd').textContent='actualizado '+new Date(d.now).toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'})}catch(e){$('upd').textContent='sin conexión'}}
+load();setInterval(load,120000);
+j('/api/caso/28a').then(renderCase).catch(()=>renderCase(null));
+</script>
+</body>
+</html>

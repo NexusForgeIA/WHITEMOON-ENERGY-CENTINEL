@@ -1,0 +1,81 @@
+{
+ "id": "28a",
+ "title": "Apagón ibérico del 28 de abril de 2025",
+ "date": "2025-04-28",
+ "demand": {
+  "unit": "MW (media horaria, sistema peninsular)",
+  "start": "2025-04-28T00:00+02:00",
+  "values": [
+   21939,
+   20923,
+   20087,
+   19624,
+   19717,
+   20514,
+   23263,
+   26173,
+   27356,
+   26870,
+   26127,
+   25690,
+   13999,
+   518,
+   1172,
+   2023,
+   2765,
+   3861,
+   5811,
+   7343,
+   9496,
+   11775,
+   13157,
+   14034,
+   14585,
+   15155,
+   15405,
+   15799,
+   16244,
+   17151,
+   19827,
+   22964,
+   25219,
+   25849,
+   25585,
+   25500,
+   25544,
+   25461,
+   25007,
+   24046,
+   23817,
+   24283,
+   25000,
+   26562,
+   28628,
+   30034,
+   27616,
+   24842
+  ],
+  "source": "Red Eléctrica · REData, widget demanda/evolucion (time_trunc=hour, peninsular), consultado el 2 de noviembre de 2026"
+ },
+ "summary": "Hacia las 12:30 la demanda peninsular se hundió de ~25.700 MW a ~500 MW. La demanda tardó unas 20 horas en volver a niveles normales (08:00 del 29 de abril: ~25.200 MW).",
+ "causes": [
+  "Oscilaciones de frecuencia antes del colapso.",
+  "Varios generadores convencionales (síncronos) no controlaron la tensión como se esperaba.",
+  "La generación renovable operaba con factor de potencia fijo.",
+  "El operador del sistema se vio superado por la velocidad de los eventos y había dispositivos de compensación de activación manual.",
+  "Ajuste inadecuado de las protecciones, que saltaron antes de tiempo ante las sobretensiones.",
+  "Desconexión súbita de pequeños generadores conectados a redes de distribución."
+ ],
+ "causes_note": "Informe final del panel de expertos de ENTSO-E (marzo de 2026), según el resumen de Agencia SINC: «tormenta perfecta» de factores técnicos, no solo culpa de las renovables.",
+ "not_verified": "Esta ficha no incluye hora exacta de cada fase, MW perdidos ni efectos sobre el transporte: no se han podido confirmar en las fuentes consultadas.",
+ "links": [
+  {
+   "t": "ENTSO-E · informe final del panel de expertos",
+   "u": "https://www.entsoe.eu/news/2026/03/20/entso-e-publishes-expert-panel-final-report-on-28-april-2025-blackout-in-spain-and-portugal/"
+  },
+  {
+   "t": "Agencia SINC · Las claves del gran apagón",
+   "u": "https://www.agenciasinc.es/Noticias/Las-claves-del-gran-apagon-fallo-en-el-control-de-tension-y-cascada-de-desconexiones"
+  }
+ ]
+}
