@@ -74,7 +74,7 @@ footer{color:var(--mut);font-size:12px;padding:4px 6px 18px}
 .bdg{display:inline-block;padding:4px 11px;border-radius:99px;font-weight:800;font-size:12.5px;white-space:nowrap}.bdg.ok{background:#dff6ec;color:#0a7a52}.bdg.warn{background:#fff0cf;color:#8a5a00}.bdg.bad{background:#ffe1e4;color:#b3101f}
 .chartw{position:relative;margin-top:8px}.tip{position:absolute;display:none;pointer-events:none;background:#0f1b2d;color:#fff;border-radius:8px;padding:5px 9px;font-size:12px;white-space:nowrap;z-index:2;box-shadow:0 4px 14px #0f1b2d44}
 .rtleg{display:flex;gap:16px;flex-wrap:wrap;font-size:12px;color:var(--mut);margin:2px 0 4px 46px}.rtleg span{display:inline-flex;align-items:center;gap:6px}.rtleg i{width:18px;height:3px;border-radius:2px;display:inline-block}
-.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(118px,1fr));gap:8px;margin:10px 0 8px}.st{background:#f7faff;border:1px solid var(--line);border-radius:12px;padding:8px 11px}.st small{color:var(--mut);display:block;font-size:11.5px}.st b{font-size:16px}.st em{font-style:normal;color:var(--mut);font-size:12px}
+.hleg{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:12px;color:var(--mut);margin:2px 0 4px}.hleg .hl{display:inline-flex;align-items:center;gap:5px}.hleg i{width:10px;height:10px;border-radius:3px;display:inline-block}.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(118px,1fr));gap:8px;margin:10px 0 8px}.st{background:#f7faff;border:1px solid var(--line);border-radius:12px;padding:8px 11px}.st small{color:var(--mut);display:block;font-size:11.5px}.st b{font-size:16px}.st em{font-style:normal;color:var(--mut);font-size:12px}
 .sc2 .sch{display:flex;justify-content:space-between;align-items:center;gap:8px}.sc2 .sch b{font-size:15px}.sc2 .bdg{font-size:11.5px;padding:2px 9px}.sc2 svg{margin:6px 0 2px}
 .sc2 .meta{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;font-size:12px;color:var(--mut);margin-top:3px}
 #ctl .cg{display:grid;grid-template-columns:minmax(220px,330px) 1fr;gap:18px;align-items:center}
@@ -219,12 +219,25 @@ function renderGen(g){const b=$('gen');if(!g){b.replaceChildren(h('div','note','
   const row=h('div','genrow',null,[d,h('div',null,null,[h('div','big ok',(f*100).toFixed(1).replace('.',',')+' % renovable'),h('div','note','Resto: '+((1-f)*100).toFixed(1).replace('.',',')+' % no renovable (ciclo combinado, nuclear, cogeneración…)')])]);
   b.replaceChildren(row,bar,lg)}
 
+const DOWN=['domingo','lunes','martes','miércoles','jueves','viernes','sábado'];
+const gwh=m=>(m/1000).toLocaleString('es-ES',{maximumFractionDigits:1,minimumFractionDigits:1});
 function renderHist(hst){const b=$('hist');if(!hst||!hst.length){b.replaceChildren(h('div','note','Sin histórico todavía.'));return}
-  const W=700,H=140,mx=Math.max(...hst.map(x=>x.mwh)),bw=(W-8)/hst.length;
-  const s=sv('svg',{viewBox:'0 0 '+W+' '+(H+16),role:'img','aria-label':'Demanda diaria de los últimos 30 días'});
-  hst.forEach((x,i)=>{const bh=Math.max(2,x.mwh/mx*H);const r=sv('rect',{x:4+i*bw+1,y:H-bh,width:Math.max(1,bw-2),height:bh,rx:2,fill:'#1b6fe0',opacity:.9});r.appendChild(sv('title',{},dm(x.date)+': '+fmt(x.mwh)+' MWh'));s.appendChild(r)});
-  s.append(sv('text',{x:4,y:H+13,class:'axis'},dm(hst[0].date)),sv('text',{x:W-4,y:H+13,class:'axis','text-anchor':'end'},dm(hst[hst.length-1].date)));
-  b.replaceChildren(s,h('div','note','MWh por día, sistema peninsular. Fuente: REData.'))}
+  const dow=x=>new Date(x.date+'T12:00:00').getDay(),we=x=>dow(x)===0||dow(x)===6,avg=a=>a.length?a.reduce((t,x)=>t+x.mwh,0)/a.length:null;
+  const all=avg(hst),lab=avg(hst.filter(x=>!we(x))),fin=avg(hst.filter(we)),hi=hst.reduce((a,x)=>x.mwh>a.mwh?x:a),lo=hst.reduce((a,x)=>x.mwh<a.mwh?x:a),last=hst[hst.length-1];
+  const same=avg(hst.slice(0,-1).filter(x=>dow(x)===dow(last))),l7=avg(hst.slice(-7)),p7=hst.length>=14?avg(hst.slice(-14,-7)):null;
+  const sg=v=>v==null?'':(v>=0?'+':'−')+Math.abs(v*100).toFixed(1).replace('.',',')+' %';
+  const stats=h('div','stats',null,[tile('Media diaria',gwh(all)+' GWh','últimos '+hst.length+' días'),tile('Mayor demanda',gwh(hi.mwh)+' GWh',dm(hi.date)+' · '+DOWN[dow(hi)].slice(0,3)),tile('Menor demanda',gwh(lo.mwh)+' GWh',dm(lo.date)+' · '+DOWN[dow(lo)].slice(0,3)),
+    tile('Último día',gwh(last.mwh)+' GWh',dm(last.date)+(same?' · '+sg(last.mwh/same-1)+' vs su día de la semana':'')),tile('Tendencia 7 días',p7?sg(l7/p7-1):'—','vs los 7 anteriores'),
+    tile('Laborable / finde',gwh(lab)+' / '+(fin?gwh(fin):'—')+' GWh',fin?sg(fin/lab-1)+' en fin de semana':'')]);
+  const W=700,H=150,L=44,R=6,T=8,B=20,top=Math.ceil(Math.max(hi.mwh,1)/100000)*100000,Y=v=>T+(1-v/top)*(H-T-B),bw=(W-L-R)/hst.length;
+  const s=sv('svg',{viewBox:'0 0 '+W+' '+H,role:'img','aria-label':'Demanda diaria de los últimos '+hst.length+' días'});
+  for(let v=0;v<=top;v+=100000){s.append(sv('line',{x1:L,x2:W-R,y1:Y(v),y2:Y(v),stroke:'#e3eaf4','stroke-width':1}),sv('text',{x:L-5,y:Y(v)+4,class:'axis','text-anchor':'end'},String(v/1000)))}
+  hst.forEach((x,i)=>{const dv=x.mwh/all-1,g=x.mwh/(we(x)?fin:lab)-1,c=x===last?'#0b3d91':g<=-.08?'#e8651c':we(x)?'#8db8f2':'#1b6fe0';
+    const r=sv('rect',{x:L+i*bw+1,y:Y(x.mwh),width:Math.max(1,bw-2),height:Y(0)-Y(x.mwh),rx:2,fill:c});r.appendChild(sv('title',{},DOWN[dow(x)]+' '+dm(x.date)+': '+fmt(x.mwh)+' MWh ('+sg(dv)+' vs media)'));s.append(r)});
+  s.append(sv('line',{x1:L,x2:W-R,y1:Y(all),y2:Y(all),stroke:'#0f1b2d','stroke-width':1.2,'stroke-dasharray':'5 4'}),
+    sv('text',{x:L,y:H-4,class:'axis'},dm(hst[0].date)),sv('text',{x:W-R,y:H-4,class:'axis','text-anchor':'end'},dm(last.date)));
+  const dot=(c,t)=>h('span','hl',null,[h('i',null),tx(t)]);const lg=h('div','hleg',null,[['#1b6fe0','Laborable'],['#8db8f2','Fin de semana'],['#e8651c','≥8 % bajo lo habitual de su tipo de día'],['#0b3d91','Último día'],['#0f1b2d','--- Media ('+gwh(all)+' GWh)']].map(([c,t])=>{const e=dot(c,t);e.firstChild.style.background=c;return e}));
+  b.replaceChildren(stats,s,lg,h('div','note','GWh por día, sistema peninsular (el dato diario llega con 2-3 días de retraso). Fuente: REData.'))}
 
 
 const LVC=sc=>sc>=75?3:sc>=50?2:sc>=25?1:0, LVCOL=['#0f9d6b','#e0a100','#e8651c','#d6182a'], scol=sc=>LVCOL[LVC(sc)];
@@ -239,18 +252,25 @@ function ctlChart(ser){const W=700,H=150,L=34,R=8,T=8,B=20,X=m=>L+m/1440*(W-L-R)
   const s=sv('svg',{viewBox:'0 0 '+W+' '+H,role:'img','aria-label':'Índice de vigilancia a lo largo de hoy'});
   [[0,25,0],[25,50,1],[50,75,2],[75,100,3]].forEach(([a,b,i])=>s.append(sv('rect',{x:L,y:Y(b),width:W-L-R,height:Y(a)-Y(b),fill:LVCOL[i],opacity:.08})));
   [0,25,50,75,100].forEach(v=>s.append(sv('text',{x:L-5,y:Y(v)+4,class:'axis','text-anchor':'end'},String(v))));
+  [['Normal',12],['Atención',37],['Alto',62],['Crítico',87]].forEach(([t,v],i)=>s.append(sv('text',{x:W-R-4,y:Y(v)+4,class:'axis','text-anchor':'end',fill:LVCOL[i],opacity:.75,'font-size':11},t)));
+  [25,50,75].forEach(v=>s.append(sv('line',{x1:L,x2:W-R,y1:Y(v),y2:Y(v),stroke:'#9aa9bd','stroke-width':.7,'stroke-dasharray':'3 4'})));
   for(let hh=0;hh<=24;hh+=3)s.append(sv('text',{x:X(hh*60),y:H-4,class:'axis','text-anchor':hh===0?'start':hh===24?'end':'middle'},String(hh).padStart(2,'0')+'h'));
   if(ser.length){const pts=ser.map(x=>[X(M(x.t)),Y(x.score)]),d=pts.map((p,i)=>(i?'L':'M')+p[0].toFixed(1)+' '+p[1].toFixed(1)).join(' ');
     s.append(sv('path',{d:d+' L'+pts[pts.length-1][0]+' '+Y(0)+' L'+pts[0][0]+' '+Y(0)+'Z',fill:'#1b6fe0',opacity:.12}),sv('path',{d,fill:'none',stroke:'#1b6fe0','stroke-width':2.2,'stroke-linejoin':'round'}));
+    const lp=pts[pts.length-1],ls=ser[ser.length-1];s.append(sv('circle',{cx:lp[0],cy:lp[1],r:4,fill:scol(ls.score),stroke:'#fff','stroke-width':1.5}),sv('text',{x:lp[0]-9,y:lp[1]+5,class:'axis','text-anchor':'end'},'ahora '+ls.score));
     const mx=ser.reduce((a,x)=>x.score>a.score?x:a,ser[0]);if(mx.score>=25){const t=sv('title',{},mx.t+' · '+mx.score);s.append(sv('circle',{cx:X(M(mx.t)),cy:Y(mx.score),r:4.5,fill:scol(mx.score),stroke:'#fff','stroke-width':1.5},null));s.lastChild.appendChild(t)}}
   return s}
+function ctlKpis(c){const ser=c.series||[],f=id=>c.factors.find(x=>x.id===id),mx=ser.reduce((a,x)=>x.score>a.score?x:a,ser[0]||{score:0,t:''}),n25=ser.filter(x=>x.score>=25).length,n50=ser.filter(x=>x.score>=50).length,
+  dev=f('dev'),rp=f('ramp'),osc=f('osc'),rl=f('rules'),sp=v=>v==null?'—':(v>0?'+':v<0?'−':'')+Math.abs(v).toLocaleString('es-ES')+' %';
+  return h('div','stats',null,[tile('Índice ahora',String(c.score),c.level),tile('Máximo de hoy',String(mx.score),mx.score?'a las '+mx.t:''),tile('Tiempo en alerta',(n25*5)+' min',n50?(n50*5)+' min en Alto':'sin llegar a Alto'),
+    tile('Demanda vs previsión',dev?sp(dev.value):'—'),tile('Variación 15 min',rp?sp(rp.value):'—'),tile('Oscilación 1 h',osc&&osc.value!=null?osc.value.toLocaleString('es-ES')+' MW':'—'),tile('Reglas activas',rl&&rl.value?rl.value:'ninguna')])}
 function renderCtl(c){const b=$('ctlbox');if(!c||!c.factors){b.replaceChildren(h('div','note','Sin datos de control todavía.'));return}
   const lc=LVC(c.score),left=h('div','gau',null,[gauge(c.score,c.level),h('div','lv lvc'+lc,c.level),
     h('small',null,c.driver?'Señal principal: '+c.driver:'Sin señales de anomalía'),h('small',null,c.age_min==null?'':'Última lectura hace '+c.age_min+' min')]);
   const rows=c.factors.map(f=>h('div','fr',null,[h('b',null,f.name),(()=>{const bar=h('div','bar',null,[h('i')]);bar.firstChild.style.width=Math.max(2,f.score)+'%';bar.firstChild.style.background=scol(f.score);return bar})(),h('div','v',fval(f)),h('div','ht',f.hint)]));
   const det=h('details',null,null,[h('summary',null,'Qué puede y qué no puede hacer este índice'),h('ul',null,null,[...c.limits.map(t=>h('li',null,t)),
     h('li',null,'Prueba con el apagón del 28-A: con las lecturas horarias publicadas, durante la mañana el índice no dio ninguna señal previa (siempre por debajo de 25) y la lectura de las 12:00, ya con el colapso dentro, marcó crítico (−46 % en una hora). Es decir: detecta, no anticipa.')])]);
-  b.replaceChildren(h('div','cg',null,[left,h('div',null,null,rows)]),h('div','ctlfoot',null,[h('div','note','Índice de hoy (cada punto, una lectura de 5 min). Se calcula con la demanda real frente a la prevista y su variación en 15 min.'),ctlChart(c.series||[]),det,
+  b.replaceChildren(h('div','cg',null,[left,h('div',null,null,rows)]),h('div','ctlfoot',null,[ctlKpis(c),h('div','note','Índice de hoy (cada punto, una lectura de 5 min). Se calcula con la demanda real frente a la prevista y su variación en 15 min.'),ctlChart(c.series||[]),det,
     h('div','note','Informativo, no certificado. No sustituye los avisos de Red Eléctrica ni de Protección Civil.')]))}
 async function loadCtl(){try{renderCtl(await j('/api/control'))}catch(e){}}
 
