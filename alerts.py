@@ -23,6 +23,7 @@ OUTAGE = re.compile(r"apag[oó]n|cero el[eé]ctrico|cero energ[eé]tico|sin luz|
 # no son sucesos actuales: precios, retrospectivas, política, investigaciones, apagón analógico/digital…
 EXCL = re.compile(r"precio|factura|tarifa|recibo|bono social|aniversario|un a[ñn]o|28 de abril|informe|comisi[oó]n|investigaci|indemniz|juicio|"
                   r"ministr|gobierno|oposici|anal[oó]gico|digital|televisi|m[oó]vil|whatsapp|wifi|internet|operadora|futbol|f[uú]tbol|partido|serie|pel[ií]cula|"
+                  r"as[ií] han sido|[uú]ltimos a[ñn]os|hace (un|dos|tres|\d+) a[ñn]os|recuerda|repasa|cronolog|lecciones|qu[eé] pas[oó]|c[oó]mo fue|hist[oó]ric|"
                   r"c[oó]mo (actuar|prepar)|kit|consejos|simulacro|mapa del|opini[oó]n|editorial|apag[oó]n medi[aá]tico|apagón informativo|simulaci", re.I)
 BIG = re.compile(r"toda la isla|isla entera|cero el[eé]ctrico|cero energ[eé]tico|apag[oó]n general|miles de|todo el (pa[ií]s|territorio)|sin luz toda|total", re.I)
 PLACES = [("La Palma", r"la palma"), ("La Gomera", r"la gomera"), ("El Hierro", r"el hierro"), ("Tenerife", r"tenerife"), ("Gran Canaria", r"gran canaria"),
@@ -37,8 +38,11 @@ def _http(url):
         return r.read().decode("utf-8", "replace")
 
 
-MAX_AGE_S = 18 * 3600
-RED_AGE_S = 12 * 3600
+# Solo lo que está pasando ahora: pasadas 6 h sin titulares nuevos se retira, y solo es «alerta roja» durante las 3 primeras horas
+MAX_AGE_S = 6 * 3600
+RED_AGE_S = 3 * 3600
+RESTORED = re.compile(r"restablec|reestablec|vuelve (la )?(luz|electricidad)|vuelven? (a tener )?(luz|electricidad)|recuper\w+ (el )?(suministro|servicio|luz|electricidad)|repuesto|normalidad|restaurad|ya tienen luz|fin del apag", re.I)
+
 
 
 def parse(xml_text):
@@ -89,6 +93,9 @@ def build(items, now=None):
     out = []
     for pl, lst in by.items():
         lst.sort(key=lambda i: -i["ts"])
+        rest = [i["ts"] for i in lst if RESTORED.search(i["t"])]
+        if rest and max(rest) >= max((i["ts"] for i in lst if not RESTORED.search(i["t"])), default=0):
+            continue    # el último titular dice que ya se ha restablecido: no es un suceso en curso
         top = next((i for i in lst if not N.FOLLOWUP.search(i["t"]) and not re.search(r"exige|investig|pide|critica|acusa|culp", i["t"], re.I)), lst[0])
         srcs = sorted({i["s"] for i in lst if i["s"]})
         first = min(i["ts"] for i in lst)
