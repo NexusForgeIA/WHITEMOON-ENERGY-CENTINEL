@@ -59,8 +59,12 @@ def summarize(vals):
     last_dt, last = vals[-1]
     prev = [v for _, v in vals[:-1]]
     mean = sum(prev) / len(prev) if prev else None
+    allv = [v for _, v in vals]
+    hi, lo = max(vals, key=lambda x: x[1]), min(vals, key=lambda x: x[1])
     return {"date": last_dt[:10], "mwh": round(last), "mean_prev": round(mean) if mean else None,
-            "deviation": round((last - mean) / mean, 3) if mean else None}
+            "deviation": round((last - mean) / mean, 3) if mean else None,
+            "series": [{"date": d[:10], "mwh": round(v)} for d, v in vals[-9:]],
+            "max": {"date": hi[0][:10], "mwh": round(hi[1])}, "min": {"date": lo[0][:10], "mwh": round(lo[1])}}
 
 
 def parse_generation(data):
@@ -85,16 +89,33 @@ def parse_generation(data):
 
 
 def parse_realtime(data):
-    """demanda-tiempo-real (península) → última lectura, previsión y desviación (como la capa de RailGuard)."""
+    """demanda-tiempo-real (península) → última lectura, previsión, desviación y estadísticas del día (con ayer para comparar)."""
     series = {s.get("type"): (s.get("attributes") or {}).get("values") or [] for s in (data or {}).get("included") or []}
-    real, fc = series.get("Real") or [], {v["datetime"]: v["value"] for v in series.get("Prevista") or []}
-    if not real:
+    real_all, fc = series.get("Real") or [], {v["datetime"]: v["value"] for v in series.get("Prevista") or []}
+    if not real_all:
         return None
-    last = real[-1]
+    last = real_all[-1]
+    day = last["datetime"][:10]
+    real = [v for v in real_all if v["datetime"][:10] == day]
+    yest = [v for v in real_all if v["datetime"][:10] != day]
     exp = fc.get(last["datetime"])
+    hhmm = lambda v: v["datetime"][11:16]
+    vals = [v["value"] for v in real]
+    hi, lo = max(real, key=lambda v: v["value"]), min(real, key=lambda v: v["value"])
+    ago = next((v for v in reversed(real) if _mins(hhmm(v)) <= _mins(hhmm(last)) - 60), None)
+    ysame = next((v for v in reversed(yest) if hhmm(v) <= hhmm(last)), None)
     return {"mw": round(last["value"]), "forecast_mw": round(exp) if exp else None, "at": last["datetime"],
             "deviation": round((last["value"] - exp) / exp, 3) if exp else None,
-            "history": [{"t": v["datetime"], "real": round(v["value"]), "forecast": round(fc[v["datetime"]]) if fc.get(v["datetime"]) else None} for v in real[-48:]]}
+            "max": {"mw": round(hi["value"]), "at": hhmm(hi)}, "min": {"mw": round(lo["value"]), "at": hhmm(lo)},
+            "avg_mw": round(sum(vals) / len(vals)),
+            "delta_1h": round(last["value"] - ago["value"]) if ago else None,
+            "yesterday_same_mw": round(ysame["value"]) if ysame else None,
+            "yesterday": [{"t": hhmm(v), "real": round(v["value"])} for v in yest[::3]],
+            "history": [{"t": v["datetime"], "real": round(v["value"]), "forecast": round(fc[v["datetime"]]) if fc.get(v["datetime"]) else None} for v in real]}
+
+
+def _mins(hm):
+    return int(hm[:2]) * 60 + int(hm[3:5])
 
 
 class RedData:
@@ -129,7 +150,7 @@ class RedData:
         except Exception as ex:
             errs["generacion"] = str(ex)[:80]
         try:
-            rt = parse_realtime(self.get(url("demanda", "demanda-tiempo-real", today.strftime("%Y-%m-%dT00:00"), end, "hour")))
+            rt = parse_realtime(self.get(url("demanda", "demanda-tiempo-real", (today - timedelta(days=1)).strftime("%Y-%m-%dT00:00"), end, "hour")))
         except Exception as ex:
             errs["tiempo_real"] = str(ex)[:80]
         try:

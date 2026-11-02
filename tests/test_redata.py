@@ -51,3 +51,20 @@ def test_parse_realtime_and_refresh_collects_everything():
     rd.refresh()
     v = rd.view()
     assert v["generation"]["total_mwh"] == 700634 and v["realtime"]["mw"] == 30000 and len(v["history"]) == 4
+
+
+def test_realtime_stats_and_yesterday():
+    def pts(day, vals):
+        return [{"datetime": f"{day}T{h:02d}:00:00.000+01:00", "value": v} for h, v in vals]
+    real = pts("2026-11-01", [(10, 100), (11, 110), (12, 120)]) + pts("2026-11-02", [(10, 200), (11, 260), (12, 240), (13, 300)])
+    fc = pts("2026-11-02", [(13, 250)])
+    d = {"included": [{"type": "Real", "attributes": {"values": real}}, {"type": "Prevista", "attributes": {"values": fc}}]}
+    r = R.parse_realtime(d)
+    assert r["mw"] == 300 and r["max"] == {"mw": 300, "at": "13:00"} and r["min"]["mw"] == 200
+    assert r["avg_mw"] == 250 and r["delta_1h"] == 60 and r["yesterday_same_mw"] == 120 and r["deviation"] == 0.2
+    assert len(r["history"]) == 4 and len(r["yesterday"]) >= 1
+
+
+def test_summarize_series():
+    s = R.summarize(R.daily_values(RESP([100, 120, 90, 110])))
+    assert [x["mwh"] for x in s["series"]] == [100, 120, 90, 110] and s["max"]["mwh"] == 120 and s["min"]["mwh"] == 90
