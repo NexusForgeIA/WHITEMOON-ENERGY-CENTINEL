@@ -37,16 +37,17 @@ def f_dev(dev):
     """Demanda real frente a la prevista: por debajo de la previsión es la señal más preocupante."""
     if dev is None:
         return 0
-    s = clamp((abs(dev) - 0.02) / 0.08 * 100)
+    s = clamp((abs(dev) - 0.03) / 0.09 * 100)
     return round(s if dev < 0 else s * 0.6)
 
 
 def f_ramp(r):
-    """Caída (o subida) brusca en 15 min. Lo normal en el día es ≤1,5 % cada 15 min."""
+    """Caída (o subida) brusca en 15 min. Lo normal en el día es ≤2 % cada 15 min en caídas y ≤4 % en subidas."""
     if r is None:
         return 0
-    s = clamp((abs(r) - 0.015) / 0.065 * 100)
-    return round(s if r < 0 else s * 0.6)
+    if r > 0:      # las subidas de la mañana (hasta ~3,5 % cada 15 min) son normales
+        return round(clamp((r - 0.04) / 0.06 * 100) * 0.5)
+    return round(clamp((abs(r) - 0.02) / 0.06 * 100))
 
 
 def point_score(hist, i):
@@ -91,9 +92,9 @@ def compute(rt, price_now, alerts, now=None):
     if rt and hist:
         dev, r15 = rt.get("deviation"), ramp(hist, len(hist) - 1, 15)
         fac.append({"id": "dev", "name": "Demanda vs previsión", "score": f_dev(dev), "value": None if dev is None else round(dev * 100, 1), "unit": "%",
-                    "hint": "Por debajo de la previsión es la señal más preocupante. Alarma plena en −10 %."})
+                    "hint": "Por debajo de la previsión es la señal más preocupante. Alarma plena en −12 %."})
         fac.append({"id": "ramp", "name": "Variación en 15 min", "score": f_ramp(r15), "value": None if r15 is None else round(r15 * 100, 1), "unit": "%",
-                    "hint": "Lo normal es ≤1,5 % cada 15 min. Alarma plena en caídas de −8 %."})
+                    "hint": "Lo normal es ≤2 % cada 15 min. Alarma plena en caídas de −8 %."})
     fac.append({"id": "stale", "name": "Lectura reciente", "score": f_stale(age) if rt else 30, "value": None if age is None else round(age), "unit": "min",
                 "hint": "Si Red Eléctrica deja de publicar la lectura, se pierde la vigilancia (no implica fallo eléctrico)."})
     fac.append({"id": "price", "name": "Excedente renovable (precio)", "score": f_price(price_now), "value": price_now, "unit": "€/MWh",
