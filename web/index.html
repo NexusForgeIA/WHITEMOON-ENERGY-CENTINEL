@@ -24,7 +24,7 @@
 :root{--bg:#eef3fa;--card:#ffffff;--card2:#ffffff;--line:#dbe4f0;--txt:#0f1b2d;--mut:#5b6e86;--ok:#0f9d6b;--warn:#d98a00;--bad:#d6182a;--acc:#1b6fe0}
 *{box-sizing:border-box}
 html,body{margin:0;background:var(--bg);color:var(--txt);font:15px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
-body{padding:14px;max-width:1180px;margin:0 auto;display:flex;flex-direction:column;gap:14px;overflow-x:hidden}
+body{padding:clamp(8px,1.4vw,20px);max-width:none;margin:0;width:100%;display:flex;flex-direction:column;gap:14px;overflow-x:hidden}
 header{display:flex;flex-wrap:wrap;align-items:center;gap:10px 16px;padding:16px 20px;border-radius:18px;background:linear-gradient(120deg,#0b2a5b,#1b6fe0 60%,#2fb8ff);color:#fff;box-shadow:0 8px 24px #1b6fe033}
 header .lg{height:56px;width:auto;background:#fff;border-radius:12px;padding:4px 10px;flex:none}
 header h1{margin:0;font-size:20px;letter-spacing:.04em}header h1 b{color:#ffd23f}
