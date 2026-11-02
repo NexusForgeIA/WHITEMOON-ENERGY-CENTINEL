@@ -8,6 +8,7 @@ import json
 import os
 import re
 import threading
+from concurrent.futures import ThreadPoolExecutor
 import time
 import urllib.parse
 import urllib.request
@@ -151,7 +152,8 @@ def seed():
 
 
 class Grid:
-    def __init__(self, cache="data/grid_cache.json", opener=None, pause=1.0):
+    def __init__(self, cache="data/grid_cache.json", opener=None, pause=1.0, workers=3):
+        self.workers = workers
         self.cache = cache
         self.pause = pause
         self.open = opener or self._http
@@ -184,31 +186,43 @@ class Grid:
                 self._set(json.load(open(self.cache, encoding="utf-8")))
                 return
             self.status["state"] = "descargando"
-            plants, lines, subs, failed, streak = {}, {}, {}, [], 0
-            for b in tiles():
-                if streak >= 4 and not lines and not plants:
-                    self.status.update(state="error", error="Overpass inaccesible desde este servidor (4 zonas seguidas fallidas)")
+            plants, lines, subs, failed = {}, {}, {}, []
+            lock, done, streak = threading.Lock(), [0], [0]
+
+            def work(b):
+                if streak[0] >= 4 and not lines and not plants:
                     return
                 try:
-                    reduce(self._tile(b), plants, lines, subs)
-                    streak = 0
+                    els = self._tile(b)
+                    with lock:
+                        reduce(els, plants, lines, subs)
+                        streak[0] = 0
                 except Exception as ex:
-                    failed.append(str(ex)[:120])
-                    streak += 1
-                self.status["tiles_done"] += 1
+                    with lock:
+                        failed.append(str(ex)[:120])
+                        streak[0] += 1
+                with lock:
+                    done[0] += 1
+                    self.status["tiles_done"] = done[0]
+                    if done[0] % 3 == 0:     # se publica lo ya descargado: las líneas van apareciendo en el mapa
+                        self._set({"plants": list(plants.values()), "lines": list(lines.values()), "subs": list(subs.values())}, partial=True)
                 time.sleep(self.pause)
+            with ThreadPoolExecutor(max_workers=self.workers) as ex:
+                list(ex.map(work, tiles()))
+            if not lines and not plants:
+                self.status.update(state="error", error="Overpass inaccesible desde este servidor (zonas seguidas fallidas)")
+                return
             data = {"plants": list(plants.values()), "lines": list(lines.values()), "subs": list(subs.values()),
                     "failed_tiles": len(failed), "fetched": int(time.time())}
-            if data["lines"] or data["plants"]:
-                os.makedirs(os.path.dirname(self.cache) or ".", exist_ok=True)
-                json.dump(data, open(self.cache, "w", encoding="utf-8"), separators=(",", ":"))
+            os.makedirs(os.path.dirname(self.cache) or ".", exist_ok=True)
+            json.dump(data, open(self.cache, "w", encoding="utf-8"), separators=(",", ":"))
             self._set(data)
             if failed:
                 self.status["errors"] = failed[:3]
         except Exception as ex:
             self.status.update(state="error", error=repr(ex)[:200])
 
-    def _set(self, data):
+    def _set(self, data, partial=False):
         d = dict(data)
         # las nucleares de OSM se sustituyen por las del fichero propio (potencias y reactores verificados)
         seeds = seed()
@@ -222,7 +236,8 @@ class Grid:
         d["counts"] = {"plants": len(d["plants"]), "lines": len(d.get("lines", [])), "subs": len(d.get("subs", []))}
         with self.lock:
             self.data = d
-            self.status["state"] = "ok"
+            if not partial:
+                self.status["state"] = "ok"
 
     def start(self):
         # mientras Overpass responde, ya se ven las nucleares (fichero propio)
