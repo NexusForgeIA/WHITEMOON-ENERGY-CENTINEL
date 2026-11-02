@@ -11,6 +11,10 @@ const VIEW={pen:{c:[-3.7,39.9],z:5.2,t:'Península'},can:{c:[-15.9,28.3],z:6.6,t
 let M=null,READY=false,DATA=null,ALERTS=[],MARKERS=[],ON={nuclear:1,hidraulica:1,termica:1,eolica:1,solar:1,otras:1,l400:1,l220:1,subs:1,alerts:1},POP=null;
 const mw=v=>v==null?'—':v>=1000?(v/1000).toLocaleString('es-ES',{maximumFractionDigits:1})+' GW':Math.round(v).toLocaleString('es-ES')+' MW';
 
+const dk=()=>document.documentElement.dataset.theme==='dark';
+const sty=()=>'https://tiles.openfreemap.org/styles/'+(dk()?'dark':'positron');
+let HB=false;
+window.mapaTheme=function(){if(!M||!READY)return;READY=false;M.setStyle(sty());M.once('style.load',()=>{READY=true;initLayers();apply()})};
 function build(){
   const sec=$('mapa');if(!sec||sec.dataset.b)return;sec.dataset.b='1';
   const chips=el('div','mchips'),views=el('div','mviews');
@@ -24,7 +28,7 @@ function build(){
   $('mapa').querySelector('.mattr').textContent='Mapa © OpenFreeMap · © OpenMapTiles · Datos © colaboradores de OpenStreetMap (ODbL). Informativo: no es el inventario oficial de Red Eléctrica.';
   if(typeof maplibregl==='undefined'){msg('Mapa no disponible (no se pudo cargar la librería).');return}
   try{
-    M=new maplibregl.Map({container:sec.querySelector('.mbox'),style:'https://tiles.openfreemap.org/styles/positron',center:VIEW.pen.c,zoom:VIEW.pen.z,minZoom:3.5,maxZoom:14,attributionControl:false,renderWorldCopies:false});
+    M=new maplibregl.Map({container:sec.querySelector('.mbox'),style:sty(),center:VIEW.pen.c,zoom:VIEW.pen.z,minZoom:3.5,maxZoom:14,attributionControl:false,renderWorldCopies:false});
     M.addControl(new maplibregl.NavigationControl({showCompass:false}),'top-right');
     M.on('load',()=>{READY=true;initLayers();apply();msg('')});
     M.on('error',e=>{if(!READY&&e&&e.error&&/style|fetch|Failed|NetworkError|40[34]/i.test(String(e.error.message||e.error)))msg('Mapa base no disponible ahora mismo.')});
@@ -45,16 +49,18 @@ function initLayers(){
   const w=(a,b)=>['interpolate',['linear'],['zoom'],4,a,10,b];
   M.addLayer({id:'l220',type:'line',source:'l220',layout:{'line-cap':'round','line-join':'round'},paint:{'line-color':'#f08a24','line-width':w(.7,2),'line-opacity':.85}});
   M.addLayer({id:'l400',type:'line',source:'l400',layout:{'line-cap':'round','line-join':'round'},paint:{'line-color':'#d6182a','line-width':w(1.1,3),'line-opacity':.9}});
-  M.addLayer({id:'subs',type:'circle',source:'subs',minzoom:5.5,paint:{'circle-radius':w(2,5),'circle-color':'#111827','circle-stroke-color':'#fff','circle-stroke-width':1}});
+  M.addLayer({id:'subs',type:'circle',source:'subs',minzoom:5.5,paint:{'circle-radius':w(2,5),'circle-color':dk()?'#e5e7eb':'#111827','circle-stroke-color':dk()?'#0b0d12':'#fff','circle-stroke-width':1}});
   const col=['match',['get','g'],'nuclear',G.nuclear[1],'hidraulica',G.hidraulica[1],'termica',G.termica[1],'eolica',G.eolica[1],'solar',G.solar[1],G.otras[1]];
   M.addLayer({id:'plants',type:'circle',source:'plants',paint:{'circle-radius':['get','r'],'circle-color':col,'circle-opacity':['case',['==',['get','off'],1],.35,.88],
-    'circle-stroke-color':['case',['==',['get','g'],'nuclear'],'#facc15','#fff'],'circle-stroke-width':['case',['==',['get','g'],'nuclear'],3,1.2]}});
+    'circle-stroke-color':['case',['==',['get','g'],'nuclear'],'#facc15',dk()?'#0b0d12':'#fff'],'circle-stroke-width':['case',['==',['get','g'],'nuclear'],3,1.2]}});
   M.addLayer({id:'plants-lbl',type:'symbol',source:'plants',filter:['==',['get','g'],'nuclear'],layout:{'text-field':['get','n'],'text-font':['Noto Sans Bold'],'text-size':12,'text-offset':[0,1.6],'text-anchor':'top','text-optional':true},
-    paint:{'text-color':'#4c1d95','text-halo-color':'#fff','text-halo-width':1.6}});
+    paint:{'text-color':dk()?'#c4b5fd':'#4c1d95','text-halo-color':dk()?'#0b0d12':'#fff','text-halo-width':1.6}});
+  if(!HB){HB=true;
   M.on('click','plants',e=>{const f=e.features&&e.features[0];if(f)popPlant(DATA.plants[f.properties.i],e.lngLat)});
   M.on('click','subs',e=>{const f=e.features&&e.features[0];if(!f)return;const s=DATA.subs[f.properties.i];pop(e.lngLat,[el('b',null,s.n||'Subestación'),el('div',null,'Subestación de '+s.kv+' kV')])});
   ['l400','l220'].forEach(id=>M.on('click',id,e=>{if(M.queryRenderedFeatures(e.point,{layers:['plants','subs']}).length)return;const f=e.features[0];pop(e.lngLat,[el('b',null,'Línea de '+f.properties.kv+' kV'),el('div','note','Red de transporte (OpenStreetMap)')])}));
   ['plants','subs','l400','l220'].forEach(id=>{M.on('mouseenter',id,()=>M.getCanvas().style.cursor='pointer');M.on('mouseleave',id,()=>M.getCanvas().style.cursor='')});
+  }
   setData();
 }
 function pop(ll,kids){if(POP)POP.remove();POP=new maplibregl.Popup({maxWidth:'280px',closeButton:true}).setLngLat(ll).setDOMContent(el('div','mp',null,kids)).addTo(M)}

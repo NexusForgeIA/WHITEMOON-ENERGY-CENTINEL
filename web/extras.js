@@ -66,3 +66,24 @@ async function loadHist(){try{renderHistAl(await j('/api/historial'))}catch(e){}
 loadMeteo();setInterval(loadMeteo,600000);loadCfg();loadHist();setInterval(loadHist,300000);
 window.addEventListener('load',()=>{try{renderTips()}catch(e){}});
 if('serviceWorker' in navigator)navigator.serviceWorker.register('/sw.js').catch(()=>{});
+
+// Modo día / noche (la preferencia se guarda en este navegador; por defecto, noche)
+(function () {
+  const b = document.getElementById('thm'), root = document.documentElement;
+  if (!b) return;
+  const paint = () => {
+    const dark = root.dataset.theme === 'dark';
+    b.textContent = dark ? '☀️ Modo día' : '🌙 Modo noche';
+    b.setAttribute('aria-pressed', String(dark));
+    const m = document.querySelector('meta[name=theme-color]');
+    if (m) m.content = dark ? '#05060a' : '#c4121f';
+  };
+  b.onclick = () => {
+    const n = root.dataset.theme === 'dark' ? 'light' : 'dark';
+    root.dataset.theme = n;
+    try { localStorage.setItem('rs-theme', n); } catch (e) {}
+    paint();
+    if (window.mapaTheme) window.mapaTheme();
+  };
+  paint();
+})();
