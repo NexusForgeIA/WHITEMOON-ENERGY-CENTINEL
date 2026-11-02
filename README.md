@@ -22,3 +22,6 @@ Endpoints: `/api/resumen`, `/api/alertas`, `/api/sistemas`, `/api/caso/28a`, `/h
 
 ## Fuentes y atribución
 Red Eléctrica de España (REData, https://www.ree.es/es/datos/apidatos) · titulares: solo título, medio y enlace · ENTSO-E / Agencia SINC para el 28-A.
+
+## Mapa de centrales y red
+`grid.py` descarga de OpenStreetMap (Overpass) las centrales (`power=plant`), las líneas de 220 y 400 kV y las subestaciones de 400 kV, y las cachea 30 días en `data/grid_cache.json`. Las nucleares salen de `data/nuclear_seed.json` y se ven aunque OSM no responda. API: `/api/red`. Informativo: no es el inventario oficial de Red Eléctrica.

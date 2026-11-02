@@ -4,15 +4,17 @@ import argparse
 import json
 import mimetypes
 import os
+import gzip
 import time
 import urllib.parse
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 import alerts
+import grid
 import redata
 
 ROOT = os.path.dirname(os.path.abspath(__file__))
-ALERTS = RED = None
+ALERTS = RED = GRID = None
 
 
 def load_case(cid):
@@ -30,6 +32,8 @@ def api(path, query):
         a = ALERTS.alerts() if ALERTS else []
         return 200, {"alerts": a, "status": ALERTS.status if ALERTS else {"state": "desactivado"},
                      "source": "Titulares de medios (Google Noticias RSS). No es un aviso oficial; sin confirmar por el operador eléctrico."}
+    if path == "/api/red":
+        return 200, GRID.view() if GRID else {"plants": [], "lines": [], "subs": [], "status": {"state": "desactivado"}}
     if path == "/api/sistemas":
         return 200, RED.view() if RED else {"systems": {}, "status": {"state": "desactivado"}}
     if path == "/api/resumen":
@@ -48,9 +52,15 @@ class H(BaseHTTPRequestHandler):
         pass
 
     def _send(self, code, obj=None, raw=None, ctype="application/json; charset=utf-8"):
-        body = raw if raw is not None else json.dumps(obj, ensure_ascii=False).encode()
+        body = raw if raw is not None else json.dumps(obj, ensure_ascii=False, separators=(",", ":")).encode()
+        gz = len(body) > 4000 and "gzip" in (self.headers.get("Accept-Encoding") or "")
+        if gz:
+            body = gzip.compress(body, 6)
         self.send_response(code)
         self.send_header("Content-Type", ctype)
+        if gz:
+            self.send_header("Content-Encoding", "gzip")
+        self.send_header("Vary", "Accept-Encoding")
         self.send_header("Content-Length", str(len(body)))
         self.send_header("Cache-Control", "no-store" if raw is None else "public, max-age=300")
         self.end_headers()
@@ -70,16 +80,20 @@ class H(BaseHTTPRequestHandler):
 
 
 def main():
-    global ALERTS, RED
+    global ALERTS, RED, GRID
     ap = argparse.ArgumentParser()
     ap.add_argument("--host", default="127.0.0.1")
     ap.add_argument("--port", type=int, default=int(os.environ.get("PORT", 8080)))
     a = ap.parse_args()
     ALERTS = alerts.Energia(os.path.join(ROOT, "data", "alerts_cache.json"))
+    GRID = grid.Grid(cache=os.path.join(ROOT, "data", "grid_cache.json"))
     RED = redata.RedData(cache=os.path.join(ROOT, "data", "redata_cache.json"))
     if os.environ.get("RG_OFFLINE") != "1":
         ALERTS.start()
         RED.start()
+        GRID.start()
+    else:
+        GRID._set({"plants": [], "lines": [], "subs": []})
     print(f"WHITEMOON-ENERGY-CENTINEL en http://{a.host}:{a.port}")
     ThreadingHTTPServer((a.host, a.port), H).serve_forever()
 

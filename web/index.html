@@ -18,6 +18,8 @@
 <meta name="twitter:image" content="https://whitemoon-energy-centinel.onrender.com/og-image.png">
 <link rel="icon" type="image/png" href="/favicon.png">
 <link rel="apple-touch-icon" href="/favicon.png">
+<link rel="stylesheet" href="/vendor/maplibre/maplibre-gl.css">
+<script src="/vendor/maplibre/maplibre-gl.js" defer></script>
 <style>
 :root{--bg:#eef3fa;--card:#ffffff;--card2:#ffffff;--line:#dbe4f0;--txt:#0f1b2d;--mut:#5b6e86;--ok:#0f9d6b;--warn:#d98a00;--bad:#d6182a;--acc:#1b6fe0}
 *{box-sizing:border-box}
@@ -56,8 +58,20 @@ svg{display:block;width:100%;height:auto}
 .causes{margin:8px 0 0;padding-left:20px}.causes li{margin:5px 0}
 .note{color:var(--mut);font-size:12.5px}.note a,footer a{color:var(--acc)}
 footer{color:var(--mut);font-size:12px;padding:4px 6px 18px}
+#mapa{padding:14px 16px}
+.mviews{display:flex;gap:8px;margin:0 0 10px;flex-wrap:wrap}.vw{border:1px solid var(--line);background:#f7faff;border-radius:99px;padding:5px 14px;font:inherit;font-size:13px;font-weight:700;color:var(--acc);cursor:pointer}.vw:hover{background:#e7f0ff}
+.mwrap{position:relative;border-radius:14px;overflow:hidden;border:1px solid var(--line);background:#e8eef6}
+.mbox{height:min(68vh,620px);min-height:380px;width:100%}
+.mmsg{position:absolute;inset:0;display:none;align-items:center;justify-content:center;text-align:center;padding:20px;color:var(--mut);font-weight:600;background:#e8eef6aa;pointer-events:none}
+.mchips{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0 8px}
+.chip{display:inline-flex;align-items:center;gap:7px;border:1px solid var(--line);background:#fff;border-radius:99px;padding:6px 12px;font:inherit;font-size:13px;font-weight:700;color:var(--mut);cursor:pointer;opacity:.55}
+.chip.on{opacity:1;color:var(--txt);border-color:#b9c9e0;box-shadow:0 1px 4px #0f1b2d14}
+.chip i{width:12px;height:12px;border-radius:50%;flex:none}.chip em{font-style:normal;font-weight:600;color:var(--mut);font-size:12px}
+.mp{font:13px/1.4 system-ui,sans-serif;color:#0f1b2d;max-width:250px}.mp b{display:block;font-size:14px;margin-bottom:3px}.mp .note{margin-top:4px}
+.amk{position:relative;width:34px;height:34px;cursor:pointer}.amk .dot{position:absolute;inset:4px;border-radius:50%;background:#d6182a;color:#fff;display:flex;align-items:center;justify-content:center;font-size:16px;border:2px solid #fff;box-shadow:0 2px 8px #d6182a99}
+.amk .pu{position:absolute;inset:0;border-radius:50%;background:#d6182a66;animation:pu 1.6s ease-out infinite}@keyframes pu{from{transform:scale(.6);opacity:1}to{transform:scale(1.9);opacity:0}}
 @media(max-width:860px){.g2{grid-template-columns:1fr}}
-@media(max-width:560px){header .lg{height:44px}body{padding:8px;gap:10px}header{padding:12px 14px}.card .big{font-size:22px}
+@media(max-width:560px){header .lg{height:44px}.mbox{height:60vh;min-height:340px}.chip{padding:5px 10px;font-size:12px}body{padding:8px;gap:10px}header{padding:12px 14px}.card .big{font-size:22px}
  .al{grid-template-columns:40px 1fr;padding:10px 11px}.al .ic{width:40px;height:40px;font-size:20px}.al .sv{grid-column:2;grid-row:auto;justify-self:start;margin-bottom:3px}
  #banner{padding:9px 12px}#banner .ei{font-size:22px}.legend{grid-template-columns:1fr 1fr}}
 </style>
@@ -73,6 +87,8 @@ footer{color:var(--mut);font-size:12px;padding:4px 6px 18px}
 
 <section class="panel"><h2>Alertas de apagón</h2><div id="alerts"></div>
   <div class="note">Detectadas a partir de titulares de medios (Google Noticias). Sin confirmar por el operador eléctrico. Red Eléctrica no publica a tiempo datos por isla o comarca.</div></section>
+
+<section class="panel" id="mapa"></section>
 
 <section class="grid g2">
   <div class="panel"><h2>Península · demanda en tiempo real</h2><div id="rt"></div></div>
@@ -154,10 +170,11 @@ function renderCase(c){const b=$('casebox');if(!c){b.textContent='No disponible.
   b.replaceChildren(h('p',null,c.summary),s,h('div','note',c.demand.unit+' · '+c.demand.source),h('h2',null,'Qué falló'),h('div','note',c.causes_note),ul,h('div','note',c.not_verified),links)}
 
 async function j(u){const r=await fetch(u,{cache:'no-store'});if(!r.ok)throw new Error(r.status);return r.json()}
-async function load(){try{const d=await j('/api/resumen');renderAlerts(d.alerts||[]);renderRT(d.realtime);renderSys(d.systems);renderGen(d.generation);renderHist(d.history);
+async function load(){try{const d=await j('/api/resumen');renderAlerts(d.alerts||[]);window.__alerts=d.alerts||[];window.mapaAlerts&&window.mapaAlerts(window.__alerts);renderRT(d.realtime);renderSys(d.systems);renderGen(d.generation);renderHist(d.history);
   $('upd').textContent='actualizado '+new Date(d.now).toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'})}catch(e){$('upd').textContent='sin conexión'}}
 load();setInterval(load,120000);
 j('/api/caso/28a').then(renderCase).catch(()=>renderCase(null));
 </script>
+<script src="/mapa.js" defer></script>
 </body>
 </html>

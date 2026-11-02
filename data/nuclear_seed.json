@@ -1,0 +1,100 @@
+[
+ {
+  "n": "Central nuclear de Almaraz",
+  "g": "nuclear",
+  "s": "nuclear",
+  "mw": 1957,
+  "op": "Centrales Nucleares Almaraz-Trillo (Iberdrola, Endesa, Naturgy)",
+  "c": [
+   39.8076,
+   -5.6961
+  ],
+  "off": false,
+  "y": "1983",
+  "nota": "2 reactores (Almaraz I y II) · Cáceres"
+ },
+ {
+  "n": "Central nuclear de Ascó",
+  "g": "nuclear",
+  "s": "nuclear",
+  "mw": 1988,
+  "op": "Anav (Endesa e Iberdrola)",
+  "c": [
+   41.2011,
+   0.5693
+  ],
+  "off": false,
+  "y": "1984",
+  "nota": "2 reactores (Ascó I y II) · Tarragona"
+ },
+ {
+  "n": "Central nuclear de Cofrentes",
+  "g": "nuclear",
+  "s": "nuclear",
+  "mw": 1092,
+  "op": "Iberdrola",
+  "c": [
+   39.2146,
+   -1.0547
+  ],
+  "off": false,
+  "y": "1984",
+  "nota": "1 reactor · Valencia"
+ },
+ {
+  "n": "Central nuclear de Vandellòs II",
+  "g": "nuclear",
+  "s": "nuclear",
+  "mw": 1087,
+  "op": "Anav (Endesa e Iberdrola)",
+  "c": [
+   40.9529,
+   0.8664
+  ],
+  "off": false,
+  "y": "1988",
+  "nota": "1 reactor · Tarragona"
+ },
+ {
+  "n": "Central nuclear de Trillo",
+  "g": "nuclear",
+  "s": "nuclear",
+  "mw": 1003,
+  "op": "Centrales Nucleares Almaraz-Trillo",
+  "c": [
+   40.7005,
+   -2.6247
+  ],
+  "off": false,
+  "y": "1988",
+  "nota": "1 reactor · Guadalajara"
+ },
+ {
+  "n": "Central nuclear de Santa María de Garoña",
+  "g": "nuclear",
+  "s": "nuclear",
+  "mw": null,
+  "op": "Nuclenor (cerrada en 2012)",
+  "c": [
+   42.7742,
+   -3.2108
+  ],
+  "off": true,
+  "y": "1971",
+  "nota": "Cerrada, sin potencia en servicio · Burgos"
+ },
+ {
+  "n": "Central nuclear de Lemoiz",
+  "g": "nuclear",
+  "s": "nuclear",
+  "mw": null,
+  "op": "Nunca llegó a operar (moratoria nuclear)",
+  "c": [
+   43.4326,
+   -2.8728
+  ],
+  "off": true,
+  "y": "1972",
+  "nota": "Construida y no puesta en marcha · Bizkaia"
+ }
+]
