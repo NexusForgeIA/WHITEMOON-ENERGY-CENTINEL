@@ -127,9 +127,11 @@ def compute(rt, price_now, alerts, now=None):
     fac.append({"id": "rules", "name": "Reglas de caída activas", "score": ps, "value": who and who.get("rule"), "unit": "",
                 "hint": "R-DEM-DROP, R-DEM-DEV, R-OSC (península, 5 min) y R-SYS, R-NUC (diarias, con retraso)."})
     score = max(f["score"] for f in fac)
+    rules_on = [{"rule": a.get("rule"), "sev": a.get("sev"), "zone": a.get("zone"), "title": a.get("title")} for a in alerts or []]
     top = max(fac, key=lambda f: f["score"])
     return {"score": score, "level": level(score), "driver": top["name"] if score >= 25 else None, "factors": fac,
-            "series": series(hist), "age_min": None if age is None else round(age), "now": int(now * 1000),
+            "series": series(hist), "mw": (rt or {}).get("mw"), "forecast_mw": (rt or {}).get("forecast_mw"), "rules": rules_on,
+            "driver_detail": who.get("title") if who and top["id"] == "rules" else None, "age_min": None if age is None else round(age), "now": int(now * 1000),
             "limits": ["Frecuencia, tensión, inercia y flujos por línea no son públicos en tiempo real.",
                        "No predice: detecta en minutos desviaciones y caídas bruscas de la demanda peninsular.",
                        "Sin datos por central ni subestación: las reglas se aplican a la Península (5 min), a cada sistema (diario) y a la nuclear (diario)."]}
