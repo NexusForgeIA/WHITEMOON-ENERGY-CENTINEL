@@ -84,25 +84,63 @@ def summarize(vals):
             "max": {"date": hi[0][:10], "mwh": round(hi[1])}, "min": {"date": lo[0][:10], "mwh": round(lo[1])}}
 
 
+def _mean(a):
+    a = [x for x in a if x is not None]
+    return sum(a) / len(a) if a else None
+
+
 def parse_generation(data):
-    """estructura-generacion (día) → último día con total: reparto por tecnología y % renovable."""
+    """estructura-generacion (día) → último día con total: reparto por tecnología, % renovable y, por tecnología, la serie de días previos
+    (`series` alineada con `dates`, `prev_mean` = media de los días anteriores al último, hasta 7)."""
     inc = (data or {}).get("included") or []
-    rows, total, date = [], None, None
+    raw, total = [], {}
     for it in inc:
         a = it.get("attributes") or {}
-        vals = a.get("values") or []
+        vals = {v["datetime"][:10]: v["value"] for v in a.get("values") or [] if v.get("value") is not None}
         if not vals:
             continue
-        v = vals[-1]
         if a.get("type") == "total":
-            total, date = v["value"], v["datetime"][:10]
-            continue
-        rows.append({"name": a.get("title"), "kind": a.get("type"), "mwh": round(v["value"]), "pct": v.get("percentage"), "color": a.get("color")})
-    if not rows or not total:
+            total = vals
+        else:
+            raw.append((a, vals))
+    if not raw or not total:
         return None
-    ren = sum(r["mwh"] for r in rows if r["kind"] == "Renovable")
+    dates = sorted(total)
+    date = dates[-1]
+    rows = []
+    for a, vals in raw:
+        if date not in vals:
+            continue
+        ser = [round(vals[d]) if d in vals else None for d in dates]
+        prev = _mean(ser[-8:-1])
+        rows.append({"name": a.get("title"), "kind": a.get("type"), "mwh": round(vals[date]), "pct": vals[date] / total[date], "color": a.get("color"),
+                     "series": ser, "prev_mean": round(prev) if prev is not None else None})
+    if not rows or not total[date]:
+        return None
+    ren = lambda d: sum(r["series"][dates.index(d)] or 0 for r in rows if r["kind"] == "Renovable") / total[d]
+    free = lambda d: sum(r["series"][dates.index(d)] or 0 for r in rows if r["kind"] == "Renovable" or "nuclear" in (r["name"] or "").lower()) / total[d]
     rows.sort(key=lambda r: -r["mwh"])
-    return {"date": date, "total_mwh": round(total), "renewable_pct": round(ren / total, 3), "items": rows}
+    return {"date": date, "total_mwh": round(total[date]), "renewable_pct": round(ren(date), 3), "free_pct": round(free(date), 3),
+            "dates": dates, "total_series": [round(total[d]) for d in dates],
+            "renewable_series": [round(ren(d), 3) for d in dates], "free_series": [round(free(d), 3) for d in dates],
+            "total_prev_mean": round(_mean([total[d] for d in dates[-8:-1]]) or 0) or None, "items": rows}
+
+
+def parse_emissions(data):
+    """no-renovables-detalle-emisiones-CO2 (día) → {'series': [{date, t, g}]} con tCO2eq totales y g CO2/kWh. Los items no vienen ordenados por fecha."""
+    t, g = {}, {}
+    for it in (data or {}).get("included") or []:
+        a = it.get("attributes") or {}
+        dst = t if a.get("title") == "Total tCO2 eq." else g if a.get("title") == "tCO2 eq./MWh" else None
+        if dst is None:
+            continue
+        for v in a.get("values") or []:
+            if v.get("value") is not None:
+                dst[v["datetime"][:10]] = v["value"]
+    ds = sorted(set(t) & set(g))
+    if not ds:
+        return None
+    return {"series": [{"date": d, "t": round(t[d]), "g": round(g[d] * 1000)} for d in ds]}
 
 
 def parse_nuclear(data):
@@ -226,6 +264,12 @@ class RedData:
             gen, nuc = parse_generation(graw), parse_nuclear(graw)
         except Exception as ex:
             errs["generacion"] = str(ex)[:80]
+        try:
+            em = parse_emissions(self.get(url("generacion", "no-renovables-detalle-emisiones-CO2", start, end, "day", "peninsular")))
+            if gen and em:
+                gen["co2"] = em["series"]
+        except Exception as ex:
+            errs["emisiones"] = str(ex)[:80]
         try:
             rt = parse_realtime(self.get(url("demanda", "demanda-tiempo-real", (today - timedelta(days=1)).strftime("%Y-%m-%dT00:00"), end, "hour")))
         except Exception as ex:

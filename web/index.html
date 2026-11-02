@@ -56,6 +56,7 @@ header .sub{color:#ffe4e4;font-size:13px;flex:1 1 260px}
 .legend{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:6px 14px;font-size:13px}
 .legend div{display:flex;align-items:center;gap:8px;min-width:0}.legend i{width:12px;height:12px;border-radius:4px;flex:none}.legend span{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.legend em{font-style:normal;color:var(--mut);font-weight:600}
 .genrow{display:flex;gap:18px;align-items:center;flex-wrap:wrap}
+.gnote{margin-top:8px}.ghero{flex:1;min-width:220px;display:grid;gap:4px}.gtrend{flex:1.2;min-width:260px}.gtrend small{color:var(--mut);display:block;font-size:12px}#gen .kcs{margin:14px 0 4px}#gen .legend{grid-template-columns:repeat(auto-fill,minmax(270px,1fr))}#gen .legend em.dl{font-size:11.5px;min-width:52px;text-align:right}.dl{font-style:normal;font-size:11.5px;font-weight:600}.dl.g{color:#0a7a52}.dl.r{color:#b3101f}.dl.n{color:var(--mut)}
 svg{display:block;width:100%;height:auto}
 .axis{fill:var(--mut);font-size:13px}
 .causes{margin:8px 0 0;padding-left:20px}.causes li{margin:5px 0}
@@ -248,12 +249,41 @@ function renderSys(sys,status){const b=$('sys');const ks=Object.keys(sys||{});
 
 function renderGen(g){const b=$('gen');if(!g){b.replaceChildren(h('div','note','Sin datos de generación todavía.'));return}
   $('gdate').textContent='· '+dm(g.date)+' · '+fmt(g.total_mwh)+' MWh';
-  const bar=h('div','mix');g.items.forEach(i=>{const e=h('i');e.style.cssText='width:'+(i.mwh/g.total_mwh*100)+'%;background:'+(/^#[0-9a-f]{3,8}$/i.test(i.color||'')?i.color:'#888');e.title=i.name+': '+fmt(i.mwh)+' MWh';bar.appendChild(e)});
-  const lg=h('div','legend');g.items.forEach(i=>{const d=h('div',null,null,[h('i'),h('span',null,i.name),h('em',null,(i.mwh/g.total_mwh*100).toFixed(1).replace('.',',')+' %')]);d.firstChild.style.background=/^#[0-9a-f]{3,8}$/i.test(i.color||'')?i.color:'#888';lg.appendChild(d)});
-  const R=46,C=2*Math.PI*R,f=g.renewable_pct,d=sv('svg',{viewBox:'0 0 120 120',role:'img','aria-label':'Porcentaje renovable'});d.style.cssText='width:130px;flex:none';
+  const es=(x,d=1)=>x.toLocaleString('es-ES',{maximumFractionDigits:d,minimumFractionDigits:d}),col=c=>/^#[0-9a-f]{3,8}$/i.test(c||'')?c:'#888';
+  const mean=a=>{a=a.filter(x=>x!=null);return a.length?a.reduce((t,x)=>t+x,0)/a.length:null},prevm=a=>mean(a.slice(-8,-1));
+  const dl=(v,unit,goodUp,thr)=>{if(v==null||!isFinite(v))return null;const q=Math.abs(v)<(thr||0.5)?'n':((v>0)===goodUp?'g':'r');return h('em','dl '+q,(v>0?'▲ +':v<0?'▼ −':'• ')+es(Math.abs(v))+' '+unit+' vs media 7 d')};
+  const dpc=(cur,prev)=>prev?(cur-prev)/prev*100:null,dpp=s=>{const m=prevm(s);return m==null?null:(s[s.length-1]-m)*100};
+  const isNuc=i=>/nuclear/i.test(i.name||''),ren=i=>i.kind==='Renovable',tech=n=>g.items.find(i=>(i.name||'').toLowerCase().includes(n));
+  const dates=g.dates||[],T=g.total_series||[];
+  const fos=dates.map((_,k)=>g.items.filter(i=>!ren(i)&&!isNuc(i)).reduce((t,i)=>t+((i.series||[])[k]||0),0)/T[k]),fosNow=fos.length?fos[fos.length-1]:g.items.filter(i=>!ren(i)&&!isNuc(i)).reduce((t,i)=>t+i.mwh,0)/g.total_mwh;
+  const co2=(g.co2||[]),cl=co2.find(x=>x.date===g.date)||co2[co2.length-1],cprev=cl?mean(co2.filter(x=>x.date<cl.date).slice(-7).map(x=>x.g)):null,tprev=cl?mean(co2.filter(x=>x.date<cl.date).slice(-7).map(x=>x.t)):null;
+  const kc=(l,v,sub,d,w,c)=>h('div','kc',null,[h('small',null,l),h('b',null,v),d,h('em',null,sub),w==null?null:(()=>{const i=h('i');i.style.cssText='width:'+Math.max(2,Math.min(100,w*100))+'%;background:'+c;return h('div','bar',null,[i])})()]);
+  const gw=m=>es(m/1000)+' GWh',share=m=>es(m/g.total_mwh*100)+' % del total';
+  const f=g.renewable_pct,fr=g.free_pct!=null?g.free_pct:f,lead=g.items[0];
+  const gcol=v=>v<100?'#0f9d6b':v<180?'#e0a100':'#d6182a';
+  const cards=[kc('Renovable',es(f*100)+' %','de la generación del día',dl(dpp(g.renewable_series||[f]),'pp',true),f,'#0f9d6b'),
+    kc('Libre de CO₂',es(fr*100)+' %','renovable + nuclear',dl(dpp(g.free_series||[fr]),'pp',true),fr,'#1b6fe0'),
+    cl?kc('Intensidad de CO₂',fmt(cl.g)+' g/kWh','emitido por kWh generado',dl(dpc(cl.g,cprev),'%',false,2),Math.min(1,cl.g/400),gcol(cl.g)):kc('Intensidad de CO₂','—','sin dato de emisiones'),
+    cl?kc('Emisiones totales',fmt(cl.t)+' t','CO₂ eq. del día',dl(dpc(cl.t,tprev),'%',false,2)):kc('Emisiones totales','—','sin dato de emisiones')];
+  [['solar fotovoltaica','Solar fotovoltaica',true],['eólica','Eólica',true],['nuclear','Nuclear',true]].forEach(([k,l,gu])=>{const i=tech(k);cards.push(i?kc(l,gw(i.mwh),share(i.mwh),dl(dpc(i.mwh,i.prev_mean),'%',gu,k==='nuclear'?2:3),i.mwh/g.total_mwh,col(i.color)):kc(l,'—','sin dato'))});
+  cards.push(kc('Fósil y cogeneración',es(fosNow*100)+' %','ciclo combinado, carbón, cogeneración…',dl(dpp(fos.length?fos:[fosNow]),'pp',false),fosNow,'#e8651c'));
+  const R=46,C=2*Math.PI*R,d=sv('svg',{viewBox:'0 0 120 120',role:'img','aria-label':'Porcentaje renovable'});d.style.cssText='width:130px;flex:none';
   d.append(sv('circle',{cx:60,cy:60,r:R,fill:'none',stroke:'#e6edf7','stroke-width':14}),sv('circle',{cx:60,cy:60,r:R,fill:'none',stroke:'#0f9d6b','stroke-width':14,'stroke-dasharray':(C*f)+' '+C,'stroke-linecap':'round',transform:'rotate(-90 60 60)'}),sv('text',{x:60,y:60,'text-anchor':'middle','font-size':22,'font-weight':800,fill:'#0f1b2d'},(f*100).toFixed(0)+' %'),sv('text',{x:60,y:78,'text-anchor':'middle','font-size':10,fill:'#5b6e86'},'renovable'));
-  const row=h('div','genrow',null,[d,h('div',null,null,[h('div','big ok',(f*100).toFixed(1).replace('.',',')+' % renovable'),h('div','note','Resto: '+((1-f)*100).toFixed(1).replace('.',',')+' % no renovable (ciclo combinado, nuclear, cogeneración…)')])]);
-  b.replaceChildren(row,bar,lg)}
+  const tm=prevm(T),dt=dl(dpc(g.total_mwh,tm),'%',true,2);
+  const hero=h('div','ghero',null,[h('div','big ok',es(f*100)+' % renovable'),h('div','note','Lidera '+lead.name+' ('+es(lead.mwh/g.total_mwh*100)+' %). Libre de CO₂ (con nuclear): '+es(fr*100)+' %.'),h('div','note','Generación total '+gw(g.total_mwh)+(tm?' · media 7 días '+gw(tm):'')),dt]);
+  // tendencia: % renovable por día (barras) y % libre de CO₂ (línea)
+  const rs=(g.renewable_series||[]).slice(-8),fs=(g.free_series||[]).slice(-8),ds=dates.slice(-8);let trend=null;
+  if(rs.length>=3){const W=300,H=96,pl=6,pb=18,pt=14,bw=(W-pl*2)/rs.length,y=v=>pt+(H-pt-pb)*(1-v),s=sv('svg',{viewBox:'0 0 '+W+' '+H,role:'img','aria-label':'Tendencia del porcentaje renovable y libre de CO2'});s.style.cssText='width:100%;max-width:420px;height:auto';
+    rs.forEach((v,k)=>{const last=k===rs.length-1,x=pl+k*bw+bw*0.18,r=sv('rect',{x,y:y(v),width:bw*0.64,height:Math.max(1,H-pb-y(v)),rx:3,fill:last?'#0f9d6b':'#9fdcc3'});r.append(sv('title',{},dm(ds[k])+': '+es(v*100)+' % renovable'));s.append(r,sv('text',{x:x+bw*0.32,y:H-5,'text-anchor':'middle','font-size':9,fill:'#5b6e86'},ds[k].slice(8,10)+'/'+ds[k].slice(5,7)));
+      if(last||k===0)s.append(sv('text',{x:x+bw*0.32,y:y(v)-3,'text-anchor':'middle','font-size':9.5,'font-weight':700,fill:'#0a7a52'},es(v*100,0)+' %'))});
+    if(fs.length===rs.length)s.append(sv('polyline',{points:fs.map((v,k)=>(pl+k*bw+bw*0.5)+','+y(v)).join(' '),fill:'none',stroke:'#1b6fe0','stroke-width':2}),...fs.map((v,k)=>sv('circle',{cx:pl+k*bw+bw*0.5,cy:y(v),r:2.6,fill:'#1b6fe0'})));
+    const lg=h('div','hleg',null,[['#0f9d6b','% renovable'],['#1b6fe0','% libre de CO₂']].map(([c,t])=>{const e=h('span','hl',null,[h('i'),tx(t)]);e.firstChild.style.background=c;return e}));
+    trend=h('div','gtrend',null,[h('small',null,'Últimos '+rs.length+' días'),s,lg])}
+  const row=h('div','genrow',null,[d,hero,trend]);
+  const bar=h('div','mix');g.items.forEach(i=>{const e=h('i');e.style.cssText='width:'+(i.mwh/g.total_mwh*100)+'%;background:'+col(i.color);e.title=i.name+': '+fmt(i.mwh)+' MWh';bar.appendChild(e)});
+  const lg=h('div','legend');g.items.forEach(i=>{const dd=dpc(i.mwh,i.prev_mean),good=ren(i)||isNuc(i),c=dd==null||Math.abs(dd)<3?'n':((dd>0)===good?'g':'r');
+    const e=h('div',null,null,[h('i'),h('span',null,i.name),h('em',null,es(i.mwh/g.total_mwh*100)+' %'),dd==null?null:h('em','dl '+c,Math.abs(dd)<0.5?'= 0 %':(dd>0?'▲ +':'▼ −')+es(Math.abs(dd),0)+' %')]);e.firstChild.style.background=col(i.color);e.title=i.name+': '+fmt(i.mwh)+' MWh'+(i.prev_mean?' (media 7 d: '+fmt(i.prev_mean)+' MWh)':'');lg.appendChild(e)});
+  b.replaceChildren(row,h('div','kcs',null,cards),bar,lg,h('div','note gnote','Variaciones frente a la media de los días previos (hasta 7). Intensidad y emisiones: REData, generación no renovable. Datos diarios con 2–3 días de retraso.'))}
 
 const DOWN=['domingo','lunes','martes','miércoles','jueves','viernes','sábado'];
 const gwh=m=>(m/1000).toLocaleString('es-ES',{maximumFractionDigits:1,minimumFractionDigits:1});

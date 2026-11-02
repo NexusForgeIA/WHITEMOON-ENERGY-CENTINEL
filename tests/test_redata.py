@@ -67,3 +67,39 @@ def test_realtime_stats_and_yesterday():
 def test_summarize_series():
     s = R.summarize(R.daily_values(RESP([100, 120, 90, 110])))
     assert [x["mwh"] for x in s["series"]] == [100, 120, 90, 110] and s["max"]["mwh"] == 120 and s["min"]["mwh"] == 90
+
+
+def _d(day):
+    return f"2026-10-{day}T00:00:00.000+01:00"
+
+
+GEN2 = {"included": [
+    {"attributes": {"title": "Eólica", "type": "Renovable", "values": [{"value": 100, "datetime": _d(28)}, {"value": 40, "datetime": _d(29)}, {"value": 60, "datetime": _d(30)}]}},
+    {"attributes": {"title": "Nuclear", "type": "No-Renovable", "values": [{"value": 20, "datetime": _d(28)}, {"value": 20, "datetime": _d(29)}, {"value": 20, "datetime": _d(30)}]}},
+    {"attributes": {"title": "Ciclo combinado", "type": "No-Renovable", "values": [{"value": 80, "datetime": _d(28)}, {"value": 140, "datetime": _d(29)}, {"value": 120, "datetime": _d(30)}]}},
+    {"attributes": {"title": "Generación total", "type": "total", "values": [{"value": 200, "datetime": _d(28)}, {"value": 200, "datetime": _d(29)}, {"value": 200, "datetime": _d(30)}]}}]}
+
+
+def test_parse_generation_series_and_free_share():
+    g = R.parse_generation(GEN2)
+    wind = next(i for i in g["items"] if i["name"] == "Eólica")
+    assert g["dates"] == ["2026-10-28", "2026-10-29", "2026-10-30"] and wind["series"] == [100, 40, 60]
+    assert wind["prev_mean"] == 70 and g["renewable_series"] == [0.5, 0.2, 0.3] and g["renewable_pct"] == 0.3
+    assert g["free_pct"] == 0.4 and g["free_series"][0] == 0.6 and g["total_prev_mean"] == 200
+
+
+def test_parse_emissions_sorts_by_date_and_converts_to_g_per_kwh():
+    em = {"included": [
+        {"attributes": {"title": "Total tCO2 eq.", "values": [{"value": 78.0, "datetime": _d(27)}, {"value": 66.0, "datetime": _d(26)}]}},
+        {"attributes": {"title": "tCO2 eq./MWh", "values": [{"value": 0.1217, "datetime": _d(27)}, {"value": 0.1148, "datetime": _d(26)}]}},
+        {"attributes": {"title": "Carbón", "values": [{"value": 5, "datetime": _d(27)}]}}]}
+    assert R.parse_emissions(em)["series"] == [{"date": "2026-10-26", "t": 66, "g": 115}, {"date": "2026-10-27", "t": 78, "g": 122}]
+    assert R.parse_emissions({}) is None
+
+
+def test_refresh_attaches_co2_to_generation():
+    em = {"included": [{"attributes": {"title": "Total tCO2 eq.", "values": [{"value": 10, "datetime": _d(30)}]}},
+                       {"attributes": {"title": "tCO2 eq./MWh", "values": [{"value": 0.1, "datetime": _d(30)}]}}]}
+    rd = R.RedData(get=lambda u: em if "emisiones-CO2" in u else GEN2 if "estructura-generacion" in u else RESP([100] * 4), cache="/tmp/rd_test4.json")
+    rd.refresh()
+    assert rd.view()["generation"]["co2"] == [{"date": "2026-10-30", "t": 10, "g": 100}]
