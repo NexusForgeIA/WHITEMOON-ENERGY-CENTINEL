@@ -9,8 +9,8 @@ import xml.etree.ElementTree as ET
 from datetime import datetime
 
 URL = "https://feeds.meteoalarm.org/feeds/meteoalarm-legacy-atom-spain"
-TYPES = {"rain": "Lluvia", "wind": "Viento", "thunderstorm": "Tormentas", "snow/ice": "Nieve/hielo", "high temperature": "Calor", "low temperature": "Frío",
-         "coastal event": "Fenómeno costero", "forest fire": "Incendios", "fog": "Niebla", "flood": "Inundación", "tornado": "Tornado", "avalanche": "Aludes"}
+TYPES = {"rain": "Lluvia", "wind": "Viento", "thunderstorm": "Tormentas", "snowice": "Nieve/hielo", "hightemperature": "Calor", "lowtemperature": "Frío",
+         "coastalevent": "Fenómeno costero", "forestfire": "Incendios", "fog": "Niebla", "flood": "Inundación", "tornado": "Tornado", "avalanche": "Aludes"}
 LEVELS = {"yellow": "amarillo", "orange": "naranja", "red": "rojo"}
 RANK = {"rojo": 0, "naranja": 1, "amarillo": 2}
 GRID_TYPES = {"Viento", "Tormentas", "Nieve/hielo", "Calor", "Incendios", "Tornado", "Inundación", "Aludes"}   # los que de verdad afectan a líneas y demanda
@@ -44,7 +44,7 @@ def parse(data):
         on, ex = _ts(f.get("onset") or f.get("effective")), _ts(f.get("expires"))
         if on is None or ex is None:
             continue
-        a = {"area": area, "type": TYPES.get(m.group(2).lower(), m.group(2).capitalize()), "level": LEVELS[m.group(1).lower()], "onset": on, "expires": ex}
+        a = {"area": area, "type": TYPES.get(re.sub(r"[^a-z]", "", m.group(2).lower()), m.group(2).capitalize()), "level": LEVELS[m.group(1).lower()], "onset": on, "expires": ex}
         k = (a["area"], a["type"], a["level"], a["onset"])
         if k not in seen:
             seen.add(k)

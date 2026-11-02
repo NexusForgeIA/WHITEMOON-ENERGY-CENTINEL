@@ -70,3 +70,33 @@ def test_replay_and_daily_hits():
 def test_holiday_is_not_alerted():
     s = {"canarias": {"name": "Canarias", "date": "2026-10-12", "mwh": 700, "dow_mean": 1000, "dow_dev": -0.3}}
     assert rules.system_rules(s, date(2026, 10, 13)) == []
+
+
+def test_provisional_last_readings_do_not_alert():
+    """Las últimas lecturas de REE son provisionales (hoy 29.643 pasó a 31.668): no deben disparar reglas ni índice hasta consolidarse."""
+    t0 = datetime(2026, 11, 2, 8, 0)
+    vals = [31700] * 60 + [29600]                       # última lectura anómala (provisional)
+    h = [{"t": (t0 + timedelta(minutes=5 * i)).isoformat() + "+01:00", "real": v, "forecast": 31500} for i, v in enumerate(vals)]
+    last = risk.ts_of(h[-1]["t"])
+    assert rules.realtime_rules({"history": h}, last + 60) == []                 # recién publicada
+    assert rules.realtime_rules({"history": h}, last + 10 * 60) == []
+    rt = {"mw": 29600, "at": h[-1]["t"], "history": h}
+    assert risk.compute(rt, None, [], now=last + 10 * 60)["score"] == 0
+    h[-1]["real"] = 25000                                                          # si la caída sigue ahí 25 min después, sí es real
+    assert any(a["rule"] == "R-DEM-DROP" for a in rules.realtime_rules({"history": h}, last + 26 * 60))
+
+
+def test_seasonal_decline_does_not_alert():
+    """Baleares en octubre: baja el turismo semana a semana; no es una caída anómala (sí lo es frente a ambas bases)."""
+    bal = [20334, 21028, 21786, 21912, 20663, 19307, 18568, 20019, 19691, 19216, 17169, 17002, 15869, 15245, 15782, 17222, 17368, 16367, 17029, 16358, 15889,
+           16696, 16681, 15812, 15876, 15875, 14933, 14463, 15200, 15267, 15322, 15271, 14899]
+    daily = [[(date(2026, 9, 28) + timedelta(days=i)).isoformat(), x] for i, x in enumerate(bal)]
+    hits, _ = rules.daily_hits({"b": {"name": "Baleares", "daily": daily}})
+    assert [h["date"] for h in hits if not h["holiday"]] == []
+    daily[-1][1] = 11000                                                           # un hundimiento real sí salta
+    assert rules.daily_hits({"b": {"name": "Baleares", "daily": daily}})[0][0]["sev"] in ("alta", "muy alta")
+
+
+def test_meteo_type_normalised():
+    x = b'<feed xmlns="http://www.w3.org/2005/Atom"><entry><title>Yellow Coastal Event Warning issued for Spain - X</title><onset>2026-11-02T00:00:00+00:00</onset><expires>2026-11-03T00:00:00+00:00</expires></entry></feed>'
+    assert meteo.parse(x)[0]["type"] == "Fenómeno costero"

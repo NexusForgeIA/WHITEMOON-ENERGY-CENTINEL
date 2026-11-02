@@ -8,6 +8,7 @@ Cada alerta indica regla, valor, umbral y zona. Informativo; no sustituye a los 
 import time
 from datetime import date, datetime
 
+import redata
 import risk
 
 ZONES = {"peninsular": ("Península", 40.0, -3.7), "canarias": ("Canarias", 28.3, -15.9), "baleares": ("Baleares", 39.55, 2.9),
@@ -48,8 +49,8 @@ def _mins_ago(at, now):
 
 def realtime_rules(rt, now):
     out = []
-    hist = (rt or {}).get("history") or []
-    if not hist or (now - risk.ts_of(hist[-1]["t"])) / 60 > 90:       # sin lectura reciente no hay regla en tiempo real
+    hist = risk.consolidated((rt or {}).get("history"), now)            # las lecturas de los últimos 25 min son provisionales
+    if not hist or (now - risk.ts_of(hist[-1]["t"])) / 60 > 90 + risk.LAG_MIN:       # sin lectura reciente no hay regla en tiempo real
         return out
     recent = [i for i, h in enumerate(hist) if (now - risk.ts_of(h["t"])) / 60 <= WINDOW_MIN]
     # R-DEM-DROP: la peor caída a 15 min dentro de la última hora
@@ -62,7 +63,7 @@ def realtime_rules(rt, now):
         r, i = worst
         sev = "muy alta" if r <= -0.08 else "alta"
         out.append(_alert("R-DEM-DROP", "peninsular", sev, f"Caída de demanda peninsular {r * 100:.1f} % en 15 min".replace(".", ","),
-                          f"{n(hist[i]['real'])} MW a las {hist[i]['t'][11:16]} (hace {_mins_ago(hist[i]['t'], now)} min). Lo normal es ≤ 2 % cada 15 min. Regla R-DEM-DROP: ámbar ≤ −5 %, roja ≤ −8 %.",
+                          f"{n(hist[i]['real'])} MW a las {hist[i]['t'][11:16]} (hace {_mins_ago(hist[i]['t'], now)} min, lectura consolidada). Lo normal es ≤ 2 % cada 15 min. Regla R-DEM-DROP: ámbar ≤ −5 %, roja ≤ −8 %.",
                           round(r * 100, 1), -5, hist[i]["t"]))
     # R-DEM-DEV: desviación frente a la previsión en las dos últimas lecturas
     devs = [(h, (h["real"] - h["forecast"]) / h["forecast"]) for h in hist[-2:] if h.get("forecast")]
@@ -97,7 +98,7 @@ def system_rules(systems, today):
             continue
         sev = "muy alta" if dev <= -0.25 else "alta"
         out.append(_alert("R-SYS", k, sev, f"Demanda de {s['name']} {dev * 100:.0f} % el {d[8:10]}/{d[5:7]}".replace(".", ","),
-                          f"{n(s['mwh'])} MWh frente a ~{n(s['dow_mean'])} MWh de mediana del mismo día de la semana. Dato diario con retraso; un festivo puede explicarlo. Regla R-SYS: ámbar ≤ −10 %, roja ≤ −25 %.",
+                          f"{n(s['mwh'])} MWh frente a ~{n(s['dow_mean'])} MWh (mediana de los 3 mismos días previos) y ~{n(s.get('near_mean') or s['dow_mean'])} MWh (media de los días recientes). Dato diario con retraso; un festivo puede explicarlo. Regla R-SYS: ámbar ≤ −10 %, roja ≤ −25 % frente a ambas.",
                           round(dev * 100, 1), -10, d))
     return out
 
@@ -140,7 +141,7 @@ def replay_realtime(rt):
     hist = (rt or {}).get("history") or []
     ev = {}
     for i in range(24, len(hist)):
-        for a in realtime_rules({"history": hist[:i + 1]}, risk.ts_of(hist[i]["t"]) + 60):
+        for a in realtime_rules({"history": hist[:i + 1]}, risk.ts_of(hist[i]["t"]) + (risk.LAG_MIN + 1) * 60):
             k = (a["rule"], a["at"])
             if k not in ev or a["sev"] == "muy alta":
                 ev[k] = a
@@ -167,11 +168,10 @@ def daily_hits(systems):
         days = max(days, len(daily))
         for i in range(14, len(daily)):
             d, v = daily[i]
-            wd = date.fromisoformat(d).weekday()
-            m = risk.median([x for dd, x in daily[:i] if date.fromisoformat(dd).weekday() == wd])
-            if not m:
+            bl = redata.daily_baseline(daily, i)
+            if not bl:
                 continue
-            dev = (v - m) / m
+            dev = bl["dev"]
             if dev <= -0.10:
                 out.append({"date": d, "zone": s.get("name", k), "dev": round(dev * 100, 1), "sev": "muy alta" if dev <= -0.25 else "alta", "holiday": is_holiday(d)})
     out.sort(key=lambda h: h["date"], reverse=True)

@@ -52,6 +52,21 @@ def daily_values(data):
     return [(v["datetime"], v["value"]) for v in vals if v.get("value") is not None]
 
 
+def daily_baseline(vals, i):
+    """Línea base del día i de [(fecha, MWh)]: mediana de los 3 mismos días de la semana previos y media de los días recientes del mismo tipo
+    (laborable o fin de semana). Se usan las dos y vale la menos negativa: así una bajada estacional (turismo en octubre) no da falsa alarma."""
+    d, v = vals[i]
+    wd = datetime.fromisoformat(d[:10]).weekday()
+    same = [x for dd, x in vals[:i] if datetime.fromisoformat(dd[:10]).weekday() == wd][-3:]
+    near = [x for dd, x in vals[:i] if (datetime.fromisoformat(dd[:10]).weekday() >= 5) == (wd >= 5)][-(4 if wd >= 5 else 5):]
+    if len(same) < 2 or len(near) < 3:
+        return None
+    s = sorted(same)
+    m1 = s[len(s) // 2] if len(s) % 2 else (s[len(s) // 2 - 1] + s[len(s) // 2]) / 2
+    m2 = sum(near) / len(near)
+    return {"dow_mean": round(m1), "near_mean": round(m2), "dev": max((v - m1) / m1, (v - m2) / m2)}
+
+
 def summarize(vals):
     """vals: demanda diaria (MWh) ordenada. Último día con dato frente a la media de los anteriores."""
     if not vals:
@@ -59,14 +74,12 @@ def summarize(vals):
     last_dt, last = vals[-1]
     prev = [v for _, v in vals[-9:-1]]
     mean = sum(prev) / len(prev) if prev else None
-    wd = datetime.fromisoformat(last_dt[:10]).weekday()
-    same = sorted(v for d, v in vals[:-1] if datetime.fromisoformat(d[:10]).weekday() == wd)
-    dow = None if len(same) < 2 else (same[len(same) // 2] if len(same) % 2 else (same[len(same) // 2 - 1] + same[len(same) // 2]) / 2)
+    bl = daily_baseline(vals, len(vals) - 1)
     allv = [v for _, v in vals]
     hi, lo = max(vals, key=lambda x: x[1]), min(vals, key=lambda x: x[1])
     return {"date": last_dt[:10], "mwh": round(last), "mean_prev": round(mean) if mean else None,
             "deviation": round((last - mean) / mean, 3) if mean else None,
-            "dow_mean": round(dow) if dow else None, "dow_dev": round((last - dow) / dow, 3) if dow else None,
+            "dow_mean": bl and bl["dow_mean"], "near_mean": bl and bl["near_mean"], "dow_dev": bl and round(bl["dev"], 3),
             "series": [{"date": d[:10], "mwh": round(v)} for d, v in vals[-9:]], "daily": [[d[:10], round(v)] for d, v in vals],
             "max": {"date": hi[0][:10], "mwh": round(hi[1])}, "min": {"date": lo[0][:10], "mwh": round(lo[1])}}
 

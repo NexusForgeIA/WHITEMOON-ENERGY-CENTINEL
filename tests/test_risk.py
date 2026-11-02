@@ -26,7 +26,7 @@ def test_normal_day_is_normal():
 
 def test_sudden_drop_is_critical():
     h = hist([30000, 30000, 30000, 29900, 20000, 5000], fc=[30000] * 6)
-    r = risk.compute(rt_of(h), None, [], now=risk.ts_of(h[-1]["t"]) + 60)
+    r = risk.compute(rt_of(h), None, [], now=risk.ts_of(h[-1]["t"]) + 26 * 60)
     assert r["level"] == "Crítico" and r["driver"] in ("Demanda vs previsión", "Variación en 15 min")
     assert max(x["score"] for x in r["series"]) == 100 and r["series"][0]["score"] == 0
 

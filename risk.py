@@ -25,6 +25,14 @@ def oscillation(vals, win=12):
     return cur, base
 
 
+LAG_MIN = 25     # las últimas lecturas de REE son provisionales: se corrigen al alza en minutos (verificado el 2-nov: «29.643 MW» a las 20:55 pasó a 31.668 MW)
+
+
+def consolidated(hist, now):
+    """Solo lecturas con al menos LAG_MIN minutos: las más recientes aún no están completas y dan falsas caídas."""
+    return [h for h in hist or [] if (now - ts_of(h["t"])) / 60 >= LAG_MIN]
+
+
 def level(score):
     return next(n for t, n in LEVELS if score >= t)
 
@@ -112,11 +120,13 @@ def f_meteo(m):
 
 def compute(rt, price_now, alerts, now=None, meteo=None):
     now = now or time.time()
-    hist = (rt or {}).get("history") or []
+    hist = consolidated((rt or {}).get("history"), now)
     fac = []
     age = (now - ts_of(rt["at"])) / 60 if rt else None
     if rt and hist:
-        dev, r15 = rt.get("deviation"), ramp(hist, len(hist) - 1, 15)
+        last = hist[-1]
+        dev = (last["real"] - last["forecast"]) / last["forecast"] if last.get("forecast") else None
+        r15 = ramp(hist, len(hist) - 1, 15)
         fac.append({"id": "dev", "name": "Demanda vs previsión", "score": f_dev(dev), "value": None if dev is None else round(dev * 100, 1), "unit": "%",
                     "hint": "Por debajo de la previsión es la señal más preocupante. Alarma plena en −12 %."})
         fac.append({"id": "ramp", "name": "Variación en 15 min", "score": f_ramp(r15), "value": None if r15 is None else round(r15 * 100, 1), "unit": "%",

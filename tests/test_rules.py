@@ -11,7 +11,7 @@ def mk(vals, fc=None, start="2026-11-02T08:00:00"):
 
 
 def now_of(h):
-    return datetime.fromisoformat(h[-1]["t"]).timestamp() + 60
+    return datetime.fromisoformat(h[-1]["t"]).timestamp() + 26 * 60
 
 
 def ids(al):

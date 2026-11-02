@@ -54,8 +54,9 @@ function renderHistAl(hs){const b=$('histal');if(!hs||!hs.realtime){b.replaceChi
   const meth=h('details',null,null,[h('summary',null,'Metodología: cómo se calculan las reglas'),
     h('div','mth',null,[h('table',null,null,[h('thead',null,null,[h('tr',null,null,['Regla','Qué mide','Ámbar','Roja'].map(t=>h('th',null,t)))]),h('tbody',null,null,hs.rules.map(r=>h('tr',null,null,[h('td',null,r.id),h('td',null,r.name+' · '+r.scope),h('td',null,r.amber),h('td',null,r.red)])))]),
       h('ul',null,null,['Los datos son los públicos de Red Eléctrica (REData): demanda cada 5 min, su previsión, demanda diaria por sistema y generación diaria por tecnología.',
+        'Las lecturas de los últimos 25 min son provisionales (Red Eléctrica las corrige al alza a los pocos minutos), por eso las reglas y el índice usan solo lecturas consolidadas y avisan con ese retraso.',
         'La variación se normaliza «a 15 min» y las caídas a plena mañana (rampas de +3 % cada 15 min) no cuentan. La oscilación es la media del valor absoluto de la segunda diferencia en la última hora frente a la mediana habitual del día.',
-        'Las reglas diarias comparan con la mediana del mismo día de la semana y no saltan en festivos nacionales. Con datos diarios no se puede situar la hora ni la causa.',
+        'Las reglas diarias comparan con la mediana de los 3 mismos días de la semana previos y con la media de los días recientes (deben caer frente a ambas, para no confundir una bajada estacional) y no saltan en festivos nacionales. Con datos diarios no se puede situar la hora ni la causa.',
         'Calibradas con lecturas reales: caídas de hasta −2 % cada 15 min son normales; con las lecturas horarias del 28-A el índice no habría avisado antes del colapso (detecta, no anticipa).',
         'No existen datos públicos en tiempo real por central, subestación o línea, ni de frecuencia, tensión o inercia. Una regla que salta es una señal para mirar, no la confirmación de un apagón.']
         .map(t=>h('li',null,t)))])]);

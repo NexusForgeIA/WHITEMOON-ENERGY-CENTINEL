@@ -306,7 +306,7 @@ function renderCtl(c){const b=$('ctlbox');if(!c||!c.factors){b.replaceChildren(h
     h('div','why',c.driver?'Señal principal: '+c.driver+(c.driver_detail?' · '+c.driver_detail:''):'Sin señales de anomalía en la red'),
     h('small',null,c.age_min==null?'':'Última lectura hace '+c.age_min+' min')]);
   const nr=(c.rules||[]).length,kp=h('div','kcs',null,[
-    kc('Demanda ahora',c.mw==null?'—':fmt(c.mw)+' MW',c.forecast_mw?'prevista '+fmt(c.forecast_mw)+' MW':'',null),
+    kc('Demanda ahora',c.mw==null?'—':fmt(c.mw)+' MW',(c.forecast_mw?'prevista '+fmt(c.forecast_mw)+' MW · ':'')+'última lectura, provisional',null),
     kc('Frente a la previsión',dev?sp(dev.value):'—','alarma en −12 %',dev&&dev.score,dev&&dev.hint),
     kc('Variación en 15 min',rp?sp(rp.value):'—','normal: ≤ 2 %',rp&&rp.score,rp&&rp.hint),
     kc('Oscilación última hora',osc&&osc.value!=null?fmt(osc.value)+' MW':'—','ámbar desde ~400 MW',osc&&osc.score,osc&&osc.hint),
@@ -317,7 +317,7 @@ function renderCtl(c){const b=$('ctlbox');if(!c||!c.factors){b.replaceChildren(h
   const chips=h('div','rchips',null,nr?c.rules.map(x=>{const e=h('span','rc'+(x.sev==='muy alta'?' red':''),null,[h('b',null,x.rule),tx(' '+x.title)]);return e}):[h('span','rc ok',null,[tx('✓ Ninguna regla de caída activa')])]);
   const det=h('details',null,null,[h('summary',null,'Qué puede y qué no puede hacer este índice'),h('ul',null,null,[...c.limits.map(t=>h('li',null,t)),
     h('li',null,'Prueba con el apagón del 28-A: con las lecturas horarias publicadas, durante la mañana el índice no dio ninguna señal previa (siempre por debajo de 25) y la lectura de las 12:00, ya con el colapso dentro, marcó crítico (−46 % en una hora). Es decir: detecta, no anticipa.')])]);
-  b.replaceChildren(h('div','ctop',null,[hero,h('div',null,null,[kp,chips])]),h('div','ctlfoot',null,[h('div','note','Evolución del índice hoy (cada punto, una lectura de 5 min). Se calcula con la demanda real frente a la prevista, su variación en 15 min, la oscilación y las reglas de caída.'),ctlChart(c.series||[]),det,
+  b.replaceChildren(h('div','ctop',null,[hero,h('div',null,null,[kp,chips])]),h('div','ctlfoot',null,[h('div','note','Evolución del índice hoy (cada punto, una lectura de 5 min). Se calcula con lecturas consolidadas (de más de 25 min): Red Eléctrica publica las últimas como provisionales y las corrige a los pocos minutos.'),ctlChart(c.series||[]),det,
     h('div','note','Informativo, no certificado. No sustituye los avisos de Red Eléctrica ni de Protección Civil.')]))}
 async function loadCtl(){try{renderCtl(await j('/api/control'))}catch(e){}}
 
