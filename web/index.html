@@ -117,7 +117,7 @@ details.pn>summary{cursor:pointer;font-weight:800;font-size:15px}
 </header>
 <div id="banner" role="alert"></div>
 
-<section class="panel"><h2>Reglas de caída</h2><div id="alerts"></div>
+<section class="panel" id="alsec" style="display:none"><h2>Reglas de caída</h2><div id="alerts"></div>
   <div class="note">Calculadas con datos de Red Eléctrica, sin noticias. No hay datos públicos por central o subestación: las reglas miran la demanda peninsular (cada 5 min), cada sistema eléctrico (diario, con retraso) y la generación nuclear (diaria). Pueden saltar por festivos, mantenimientos o recargas programadas.</div></section>
 
 <section class="panel" id="ctl"><h2>Control de red · índice de vigilancia</h2><div id="ctlbox"><div class="note">Cargando…</div></div></section>
@@ -173,6 +173,7 @@ const SC={peninsular:'#1b6fe0',canarias:'#f59e0b',baleares:'#0fb5a5',ceuta:'#8b5
 function renderAlerts(list){
   const red=list.filter(a=>a.sev==='muy alta'),box=$('alerts'),b=$('banner');
   if(red.length){b.style.display='flex';b.replaceChildren(h('span','ei','⚡'),h('div',null,null,[document.createTextNode('ALERTA ROJA · '+red.map(a=>a.title).join(' · ')),h('small',null,'Regla calculada con datos de Red Eléctrica. No es un aviso oficial ni confirma un apagón.')]));b.onclick=()=>$('alerts').scrollIntoView({behavior:'smooth',block:'center'})}else b.style.display='none';
+  $('alsec').style.display=list.length?'':'none';
   box.replaceChildren(...(list.length?list.map(a=>{const r=a.sev==='muy alta',d=h('div','al'+(r?' red':''),null,[h('span','ic','⚡'),h('span','sv',r?'Alerta roja':'Atención'),h('b',null,a.title),h('small',null,a.detail)]);return d}):[h('div','empty','✓ Ninguna regla de caída activa con los datos actuales.')]));
 }
 
