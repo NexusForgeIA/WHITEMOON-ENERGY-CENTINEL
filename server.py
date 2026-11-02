@@ -11,6 +11,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 import alerts
 import grid
+import risk
 import redata
 
 ROOT = os.path.dirname(os.path.abspath(__file__))
@@ -34,13 +35,17 @@ def api(path, query):
                      "source": "Titulares de medios (Google Noticias RSS). No es un aviso oficial; sin confirmar por el operador eléctrico."}
     if path == "/api/red":
         return 200, GRID.view() if GRID else {"plants": [], "lines": [], "subs": [], "status": {"state": "desactivado"}}
+    if path == "/api/control":
+        v = RED.view() if RED else {}
+        al = (ALERTS.alerts() if ALERTS else []) + (RED.alerts() if RED else [])
+        return 200, risk.compute(v.get("realtime"), RED.price_now() if RED else None, al)
     if path == "/api/sistemas":
         return 200, RED.view() if RED else {"systems": {}, "status": {"state": "desactivado"}}
     if path == "/api/resumen":
         v = RED.view() if RED else {}
         sysalerts = RED.alerts() if RED else []
         return 200, {"alerts": (ALERTS.alerts() if ALERTS else []) + sysalerts, "systems": v.get("systems"), "generation": v.get("generation"),
-                     "realtime": v.get("realtime"), "history": v.get("history"), "status": v.get("status"), "now": int(time.time() * 1000)}
+                     "realtime": v.get("realtime"), "history": v.get("history"), "prices": v.get("prices"), "status": v.get("status"), "now": int(time.time() * 1000)}
     if path.startswith("/api/caso/"):
         c = load_case(path.rsplit("/", 1)[-1])
         return (200, c) if c else (404, {"error": "caso no encontrado"})
@@ -86,7 +91,7 @@ def main():
     ap.add_argument("--port", type=int, default=int(os.environ.get("PORT", 8080)))
     a = ap.parse_args()
     ALERTS = alerts.Energia(os.path.join(ROOT, "data", "alerts_cache.json"))
-    GRID = grid.Grid(cache=os.path.join(ROOT, "data", "grid_cache.json"))
+    GRID = grid.Grid(cache=os.path.join(ROOT, "data", "grid_cache.json"), use_seed=True)
     RED = redata.RedData(cache=os.path.join(ROOT, "data", "redata_cache.json"))
     if os.environ.get("RG_OFFLINE") != "1":
         ALERTS.start()

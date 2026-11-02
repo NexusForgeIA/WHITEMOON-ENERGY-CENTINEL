@@ -12,7 +12,7 @@ import os
 import threading
 import time
 import urllib.request
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 BASE = "https://apidatos.ree.es/es/datos/"
 GEO = {"peninsular": 8741, "canarias": 8742, "baleares": 8743, "ceuta": 8744, "melilla": 8745}
@@ -118,20 +118,66 @@ def _mins(hm):
     return int(hm[:2]) * 60 + int(hm[3:5])
 
 
+def madrid_now(ts=None):
+    """Hora local de Madrid (aprox.): si el sistema no trae zonas horarias, UTC+1/+2 por la regla europea del horario de verano."""
+    ts = ts or time.time()
+    try:
+        from zoneinfo import ZoneInfo
+        return datetime.fromtimestamp(ts, ZoneInfo("Europe/Madrid")).replace(tzinfo=None)
+    except Exception:
+        u = datetime.fromtimestamp(ts, timezone.utc)
+        last = lambda y, m: max(d for d in (datetime(y, m, x, 1, tzinfo=timezone.utc) for x in range(25, 32)) if d.weekday() == 6)
+        dst = last(u.year, 3) <= u < last(u.year, 10)
+        return (u + timedelta(hours=2 if dst else 1)).replace(tzinfo=None)
+
+
+def parse_prices(data):
+    """precios-mercados-tiempo-real → {'days': [{date, spot[[min,€]], pvpc[[h,€]], stats}], 'pts': [[epoch,spot,pvpc]]} (spot cada 15 min, PVPC horario)."""
+    inc = {s.get("type"): (s.get("attributes") or {}).get("values") or [] for s in (data or {}).get("included") or []}
+    spot, pvpc = inc.get("Precio mercado spot") or [], inc.get("PVPC") or []
+    if not spot:
+        return None
+    day = {}
+    for v in spot:
+        d = v["datetime"][:10]
+        m = int(v["datetime"][11:13]) * 60 + int(v["datetime"][14:16])
+        day.setdefault(d, {"spot": [], "pvpc": []})["spot"].append([m, round(v["value"], 2)])
+    for v in pvpc:
+        d = v["datetime"][:10]
+        if d in day:
+            day[d]["pvpc"].append([int(v["datetime"][11:13]), round(v["value"], 2)])
+    out = []
+    for d in sorted(day):
+        sp = day[d]["spot"]
+        hrs = {}
+        for m, x in sp:
+            hrs.setdefault(m // 60, []).append(x)
+        hm = {h: sum(a) / len(a) for h, a in hrs.items()}
+        hi, lo = max(sp, key=lambda x: x[1]), min(sp, key=lambda x: x[1])
+        out.append({"date": d, "spot": sp, "pvpc": day[d]["pvpc"],
+                    "stats": {"min": {"v": lo[1], "at": f"{lo[0] // 60:02d}:{lo[0] % 60:02d}"}, "max": {"v": hi[1], "at": f"{hi[0] // 60:02d}:{hi[0] % 60:02d}"},
+                              "avg": round(sum(x[1] for x in sp) / len(sp), 2),
+                              "cheap": sorted(h for h, x in hm.items() if x <= 5), "dear": sorted(sorted(hm, key=lambda h: -hm[h])[:3])}})
+    pts = [[datetime.fromisoformat(v["datetime"]).timestamp(), v["value"]] for v in spot]
+    return {"days": out, "pts": pts}
+
+
 class RedData:
     def __init__(self, get=_get, cache="data/redata_cache.json", period=1800, now=time.time):
         self.get, self.cache, self.period, self.now = get, cache, period, now
         self.systems, self.status, self.lock = {}, {"state": "pendiente"}, threading.Lock()
         self.generation, self.realtime, self.history = None, None, []
+        self.prices = None
         try:
             d = json.load(open(cache, encoding="utf-8"))
             self.systems, self.status = d["systems"], {"state": "caché", "fetched": d.get("fetched")}
             self.generation, self.realtime, self.history = d.get("generation"), d.get("realtime"), d.get("history") or []
+            self.prices = d.get("prices")
         except Exception:
             pass
 
     def refresh(self):
-        today = datetime.fromtimestamp(self.now())
+        today = madrid_now(self.now())
         start, end = (today - timedelta(days=8)).strftime("%Y-%m-%dT00:00"), today.strftime("%Y-%m-%dT23:59")
         out, errs = {}, {}
         for sys_ in GEO:
@@ -153,6 +199,7 @@ class RedData:
             rt = parse_realtime(self.get(url("demanda", "demanda-tiempo-real", (today - timedelta(days=1)).strftime("%Y-%m-%dT00:00"), end, "hour")))
         except Exception as ex:
             errs["tiempo_real"] = str(ex)[:80]
+        pr = self._fetch_prices(today, errs)
         try:
             h0 = (today - timedelta(days=30)).strftime("%Y-%m-%dT00:00")
             hist = [{"date": d[:10], "mwh": round(v)} for d, v in daily_values(self.get(url("demanda", "evolucion", h0, end, "day", "peninsular")))]
@@ -163,6 +210,8 @@ class RedData:
                 self.generation = gen
             if rt:
                 self.realtime = rt
+            if pr:
+                self.prices = pr
             if hist:
                 self.history = hist
             if out:
@@ -170,13 +219,53 @@ class RedData:
             self.status = {"state": "ok" if out else "error", "fetched": int(self.now() * 1000), "errors": errs}
         try:
             os.makedirs(os.path.dirname(self.cache) or ".", exist_ok=True)
-            json.dump({"systems": self.systems, "generation": self.generation, "realtime": self.realtime, "history": self.history, "fetched": self.status.get("fetched")}, open(self.cache, "w", encoding="utf-8"))
+            json.dump({"systems": self.systems, "generation": self.generation, "realtime": self.realtime, "history": self.history, "prices": self.prices, "fetched": self.status.get("fetched")}, open(self.cache, "w", encoding="utf-8"))
         except OSError:
             pass
 
+    def _fetch_prices(self, today, errs):
+        """Precios de hoy y, si ya están publicados, de mañana (el mercado diario los publica a primera hora de la tarde)."""
+        for end in ((today + timedelta(days=1)).strftime("%Y-%m-%dT23:59"), today.strftime("%Y-%m-%dT23:59")):
+            try:
+                return parse_prices(self.get(url("mercados", "precios-mercados-tiempo-real", today.strftime("%Y-%m-%dT00:00"), end, "hour")))
+            except Exception as ex:
+                errs["precios"] = str(ex)[:80]
+        return None
+
+    def refresh_fast(self):
+        """Cada pocos minutos: demanda en tiempo real (de ayer a hoy, para comparar) y precios."""
+        today, errs = madrid_now(self.now()), {}
+        rt = None
+        try:
+            rt = parse_realtime(self.get(url("demanda", "demanda-tiempo-real", (today - timedelta(days=1)).strftime("%Y-%m-%dT00:00"), today.strftime("%Y-%m-%dT23:59"), "hour")))
+        except Exception as ex:
+            errs["tiempo_real"] = str(ex)[:80]
+        pr = self._fetch_prices(today, errs)
+        with self.lock:
+            if rt:
+                self.realtime = rt
+            if pr:
+                self.prices = pr
+            if rt or pr:
+                self.status = {**self.status, "fast_fetched": int(self.now() * 1000), "fast_errors": errs}
+
+    def price_now(self):
+        with self.lock:
+            pr = self.prices
+        if not pr:
+            return None
+        t = self.now()
+        cur = [p for p in pr.get("pts", []) if p[0] <= t]
+        return cur[-1][1] if cur and t - cur[-1][0] < 3 * 3600 else None
+
     def view(self):
         with self.lock:
-            return {"systems": self.systems, "generation": self.generation, "realtime": self.realtime, "history": self.history,
+            pr = dict(self.prices) if self.prices else None
+        if pr:
+            pr.pop("pts", None)
+            pr["now"] = self.price_now()
+        with self.lock:
+            return {"systems": self.systems, "generation": self.generation, "realtime": self.realtime, "history": self.history, "prices": pr,
                     "status": self.status, "catalog": CATALOG,
                     "source": "Red Eléctrica de España · REData (apidatos.ree.es). Demanda diaria en MWh; Canarias, Baleares, Ceuta y Melilla solo con datos diarios."}
 
@@ -199,5 +288,14 @@ class RedData:
                 pass
             time.sleep(self.period)
 
+    def _fast_loop(self):
+        while True:
+            time.sleep(300)
+            try:
+                self.refresh_fast()
+            except Exception:
+                pass
+
     def start(self):
         threading.Thread(target=self._loop, daemon=True, name="redata").start()
+        threading.Thread(target=self._fast_loop, daemon=True, name="redata-fast").start()

@@ -68,9 +68,10 @@ function setData(){if(!READY||!DATA)return;
   document.querySelectorAll('#mapa .chip').forEach(b=>{const k=b.dataset.k;if(G[k]){const e=b.querySelector('em');e.textContent=cnt[k]?cnt[k]+(sum[k]?' · '+mw(sum[k]):''):''}});
   const st=DATA.status||{},n=DATA.counts||{};
   let t='';
-  if(st.state==='descargando'||!(n.lines>0))t=st.state==='error'?'Líneas y resto de centrales no disponibles: '+(st.error||'OpenStreetMap no responde')+'. Se muestran solo las nucleares.':
+  const sumy=n.plants+' centrales · '+n.lines+' tramos de línea · '+n.subs+' subestaciones. Eólica y solar: solo instalaciones de 20 MW o más con potencia indicada; la potencia suma lo que figura en OpenStreetMap, no es la instalada oficial.';
+  if(!(n.lines>0))t=st.state==='error'?'Líneas y resto de centrales no disponibles: '+(st.error||'OpenStreetMap no responde')+'. Se muestran solo las nucleares.':
     'Cargando líneas y centrales de OpenStreetMap'+(st.tiles_total?' ('+st.tiles_done+'/'+st.tiles_total+' zonas)':'')+'… Mientras tanto se ven las nucleares.';
-  else t=n.plants+' centrales · '+n.lines+' tramos de línea · '+n.subs+' subestaciones. Eólica y solar: solo instalaciones de 20 MW o más con potencia indicada; la potencia suma lo que figura en OpenStreetMap, no es la instalada oficial.';
+  else t=sumy+(st.state==='descargando'?' Actualizando desde OpenStreetMap ('+st.tiles_done+'/'+st.tiles_total+')…':'');
   const m=document.querySelector('#mapa .mnote');if(m)m.textContent=t;apply()}
 
 function apply(){if(!READY)return;
@@ -90,7 +91,7 @@ window.mapaAlerts=l=>{ALERTS=l;if(READY)alertMarkers(l)};
 
 let tm=null;
 async function poll(){try{const r=await fetch('/api/red',{cache:'no-store'});if(!r.ok)throw 0;DATA=await r.json();setData()}catch(e){}
-  const st=DATA&&DATA.status||{},wait=(st.state==='descargando'||!(DATA&&DATA.counts&&DATA.counts.lines>0))&&st.state!=='error'?15000:1800000;clearTimeout(tm);tm=setTimeout(poll,wait)}
+  const st=DATA&&DATA.status||{},hasL=DATA&&DATA.counts&&DATA.counts.lines>0,wait=st.state==='error'?1800000:!hasL?15000:st.state==='descargando'?90000:1800000;clearTimeout(tm);tm=setTimeout(poll,wait)}
 function start(){build();poll();const t=setInterval(()=>{if(READY){clearInterval(t);alertMarkers(window.__alerts||ALERTS)}},500)}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start);else start();
 })();

@@ -60,3 +60,23 @@ def test_grid_overpass_down():
     g = grid.Grid(cache=os.path.join(tempfile.mkdtemp(), "g.json"), opener=opener, pause=0)
     g.run()
     assert g.status["state"] == "error"
+
+
+def test_seed_loaded_and_partial_not_published(tmp_path):
+    g = grid.Grid(cache=str(tmp_path / "g.json"), opener=lambda ep, q: {"elements": []}, pause=0, use_seed=True)
+    g.start()
+    import time as _t
+    for _ in range(50):
+        if g.status["state"] in ("ok", "error"):
+            break
+        _t.sleep(.05)
+    v = g.view()
+    assert v["counts"]["lines"] > 1000 and v["counts"]["plants"] > 1000      # el seed sigue ahí aunque la descarga nueva venga vacía
+    assert any(p["g"] == "nuclear" and p["mw"] for p in v["plants"])
+
+
+def test_null_geometry_nodes_do_not_break_tile():
+    el = [{"type": "way", "id": 7, "tags": {"power": "line", "voltage": "400000"}, "geometry": [{"lat": 40, "lon": -3}, None, {"lat": 40.1, "lon": -3.1}]}]
+    lines, p, s = {}, {}, {}
+    grid.reduce(el, p, lines, s)
+    assert len(lines) == 1 and len(lines["way7"]["p"]) == 2

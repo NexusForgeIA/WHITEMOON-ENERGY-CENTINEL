@@ -119,7 +119,7 @@ def reduce(elements, plants, lines, subs):
             kv = kv_of(t.get("voltage"))
             if kv < 200 or key in lines:
                 continue
-            pts = simplify([(round(g["lat"], 4), round(g["lon"], 4)) for g in e["geometry"]])
+            pts = simplify([(round(g["lat"], 4), round(g["lon"], 4)) for g in e["geometry"] if g])   # con bbox, Overpass devuelve null en los nodos fuera de la tesela
             if len(pts) >= 2:
                 lines[key] = {"kv": kv, "p": [[a, b] for a, b in pts]}
         elif t.get("power") == "substation":
@@ -152,8 +152,10 @@ def seed():
 
 
 class Grid:
-    def __init__(self, cache="data/grid_cache.json", opener=None, pause=1.0, workers=3):
+    def __init__(self, cache="data/grid_cache.json", opener=None, pause=1.0, workers=3, use_seed=False):
+        self.use_seed = use_seed
         self.workers = workers
+        self.seeded = False
         self.cache = cache
         self.pause = pause
         self.open = opener or self._http
@@ -180,10 +182,26 @@ class Grid:
                     time.sleep(self.pause * 2)
         raise RuntimeError(f"tesela {b}: {last!r}")
 
+    def _load_seed(self):
+        """Datos de partida incluidos en el repo (descarga previa de OSM): el mapa sale completo desde el primer segundo."""
+        try:
+            d = json.load(open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "data", "grid_seed.json"), encoding="utf-8"))
+            self._set(d, partial=True)
+            self.seeded = True
+            return d
+        except Exception:
+            return None
+
     def run(self):
         try:
             if os.path.exists(self.cache) and time.time() - os.path.getmtime(self.cache) < TTL_S:
-                self._set(json.load(open(self.cache, encoding="utf-8")))
+                d = json.load(open(self.cache, encoding="utf-8"))
+                if not d.get("failed_tiles"):
+                    self._set(d)
+                    return
+            seed = getattr(self, "seed_data", None)
+            if seed and not seed.get("failed_tiles") and time.time() - seed.get("fetched", 0) < TTL_S:
+                self._set(seed)
                 return
             self.status["state"] = "descargando"
             plants, lines, subs, failed = {}, {}, {}, []
@@ -204,7 +222,7 @@ class Grid:
                 with lock:
                     done[0] += 1
                     self.status["tiles_done"] = done[0]
-                    if done[0] % 3 == 0:     # se publica lo ya descargado: las líneas van apareciendo en el mapa
+                    if done[0] % 3 == 0 and not self.seeded:     # se publica lo ya descargado: las líneas van apareciendo en el mapa
                         self._set({"plants": list(plants.values()), "lines": list(lines.values()), "subs": list(subs.values())}, partial=True)
                 time.sleep(self.pause)
             with ThreadPoolExecutor(max_workers=self.workers) as ex:
@@ -242,6 +260,7 @@ class Grid:
     def start(self):
         # mientras Overpass responde, ya se ven las nucleares (fichero propio)
         self._set({"plants": [], "lines": [], "subs": []})
+        self.seed_data = self._load_seed() if self.use_seed else None
         self.status["state"] = "descargando"
         threading.Thread(target=self.run, daemon=True).start()
 

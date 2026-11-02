@@ -70,13 +70,22 @@ footer{color:var(--mut);font-size:12px;padding:4px 6px 18px}
 .mp{font:13px/1.4 system-ui,sans-serif;color:#0f1b2d;max-width:250px}.mp b{display:block;font-size:14px;margin-bottom:3px}.mp .note{margin-top:4px}
 .amk{position:relative;width:34px;height:34px;cursor:pointer}.amk .dot{position:absolute;inset:4px;border-radius:50%;background:#d6182a;color:#fff;display:flex;align-items:center;justify-content:center;font-size:16px;border:2px solid #fff;box-shadow:0 2px 8px #d6182a99}
 .amk .pu{position:absolute;inset:0;border-radius:50%;background:#d6182a66;animation:pu 1.6s ease-out infinite}@keyframes pu{from{transform:scale(.6);opacity:1}to{transform:scale(1.9);opacity:0}}
-.rthead{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;flex-wrap:wrap}
+.rthead .big{font-size:30px;font-weight:800;line-height:1.15}.rthead{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;flex-wrap:wrap}
 .bdg{display:inline-block;padding:4px 11px;border-radius:99px;font-weight:800;font-size:12.5px;white-space:nowrap}.bdg.ok{background:#dff6ec;color:#0a7a52}.bdg.warn{background:#fff0cf;color:#8a5a00}.bdg.bad{background:#ffe1e4;color:#b3101f}
 .chartw{position:relative;margin-top:8px}.tip{position:absolute;display:none;pointer-events:none;background:#0f1b2d;color:#fff;border-radius:8px;padding:5px 9px;font-size:12px;white-space:nowrap;z-index:2;box-shadow:0 4px 14px #0f1b2d44}
 .rtleg{display:flex;gap:16px;flex-wrap:wrap;font-size:12px;color:var(--mut);margin:2px 0 4px 46px}.rtleg span{display:inline-flex;align-items:center;gap:6px}.rtleg i{width:18px;height:3px;border-radius:2px;display:inline-block}
 .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(118px,1fr));gap:8px;margin:10px 0 8px}.st{background:#f7faff;border:1px solid var(--line);border-radius:12px;padding:8px 11px}.st small{color:var(--mut);display:block;font-size:11.5px}.st b{font-size:16px}.st em{font-style:normal;color:var(--mut);font-size:12px}
 .sc2 .sch{display:flex;justify-content:space-between;align-items:center;gap:8px}.sc2 .sch b{font-size:15px}.sc2 .bdg{font-size:11.5px;padding:2px 9px}.sc2 svg{margin:6px 0 2px}
 .sc2 .meta{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;font-size:12px;color:var(--mut);margin-top:3px}
+#ctl .cg{display:grid;grid-template-columns:minmax(220px,330px) 1fr;gap:18px;align-items:center}
+.gau{text-align:center}.gau svg{max-width:330px;margin:0 auto}.gau .lv{font-size:22px;font-weight:800;margin-top:-6px}.gau small{display:block;color:var(--mut);margin-top:2px}
+.fr{display:grid;grid-template-columns:minmax(130px,1.2fr) minmax(90px,1fr) 64px;gap:4px 12px;align-items:center;padding:8px 0;border-bottom:1px solid var(--line)}.fr:last-child{border:0}
+.fr b{font-size:13.5px}.fr .v{font-weight:800;font-size:14px;text-align:right}.fr .bar{height:9px;border-radius:99px;background:#e6edf7;overflow:hidden}.fr .bar i{display:block;height:100%;border-radius:99px}
+.fr .ht{grid-column:1/-1;font-size:11.5px;color:var(--mut);margin-top:-2px}
+.lvc0{color:var(--ok)}.lvc1{color:#b07300}.lvc2{color:#d2561a}.lvc3{color:var(--bad)}
+.ctlfoot{margin-top:12px;display:grid;gap:10px}.ctlfoot details{border:1px solid var(--line);border-radius:12px;padding:8px 12px;background:#f7faff;font-size:13px}.ctlfoot summary{cursor:pointer;font-weight:700}.ctlfoot ul{margin:6px 0 0;padding-left:18px}.ctlfoot li{margin:3px 0}
+.ptabs{display:flex;gap:8px;margin:0 0 8px}.ptabs button{border:1px solid var(--line);background:#fff;border-radius:99px;padding:4px 14px;font:inherit;font-size:13px;font-weight:700;color:var(--mut);cursor:pointer}.ptabs button.on{background:#e7f0ff;color:var(--acc);border-color:#b9c9e0}
+@media(max-width:760px){#ctl .cg{grid-template-columns:1fr}.fr{grid-template-columns:1fr 70px}.fr .bar{grid-column:1/-1;order:3}}
 @media(max-width:860px){.g2{grid-template-columns:1fr}}
 @media(max-width:560px){#sys{grid-template-columns:1fr!important}.rtleg{margin-left:0}header .lg{height:44px}.mbox{height:60vh;min-height:340px}.chip{padding:5px 10px;font-size:12px}body{padding:8px;gap:10px}header{padding:12px 14px}.card .big{font-size:22px}
  .al{grid-template-columns:40px 1fr;padding:10px 11px}.al .ic{width:40px;height:40px;font-size:20px}.al .sv{grid-column:2;grid-row:auto;justify-self:start;margin-bottom:3px}
@@ -95,6 +104,8 @@ footer{color:var(--mut);font-size:12px;padding:4px 6px 18px}
 <section class="panel"><h2>Alertas de apagón</h2><div id="alerts"></div>
   <div class="note">Detectadas a partir de titulares de medios (Google Noticias). Sin confirmar por el operador eléctrico. Red Eléctrica no publica a tiempo datos por isla o comarca.</div></section>
 
+<section class="panel" id="ctl"><h2>Control de red · índice de vigilancia</h2><div id="ctlbox"><div class="note">Cargando…</div></div></section>
+
 <section class="panel" id="mapa"></section>
 
 <section class="grid g2">
@@ -104,10 +115,10 @@ footer{color:var(--mut);font-size:12px;padding:4px 6px 18px}
 
 <section class="panel"><h2>Generación peninsular <span id="gdate" style="text-transform:none;letter-spacing:0"></span></h2><div id="gen"></div></section>
 <section class="panel"><h2>Demanda peninsular · últimos 30 días</h2><div id="hist"></div></section>
-<section class="panel" id="case"><h2>Caso histórico · apagón del 28 de abril de 2025</h2><div id="casebox">Cargando…</div></section>
+<section class="panel" id="precio"><h2>Precio de la luz · mercado mayorista</h2><div id="pbox"><div class="note">Cargando…</div></div></section>
 
 <footer>
-  Fuentes: Red Eléctrica de España, <a href="https://www.ree.es/es/datos/apidatos" target="_blank" rel="noopener">REData</a> (demanda y generación; Canarias, Baleares, Ceuta y Melilla solo con datos diarios y retraso) · titulares de medios vía Google Noticias (solo título, medio y enlace) · informe de ENTSO-E sobre el 28-A según Agencia SINC.
+  Fuentes: Red Eléctrica de España, <a href="https://www.ree.es/es/datos/apidatos" target="_blank" rel="noopener">REData</a> (demanda y generación; Canarias, Baleares, Ceuta y Melilla solo con datos diarios y retraso) · titulares de medios vía Google Noticias (solo título, medio y enlace).
   Informativo, no certificado, solo datos públicos. No sustituye a los avisos de Red Eléctrica, Protección Civil ni de los operadores.
 </footer>
 
@@ -217,22 +228,58 @@ function renderHist(hst){const b=$('hist');if(!hst||!hst.length){b.replaceChildr
   s.append(sv('text',{x:4,y:H+13,class:'axis'},dm(hst[0].date)),sv('text',{x:W-4,y:H+13,class:'axis','text-anchor':'end'},dm(hst[hst.length-1].date)));
   b.replaceChildren(s,h('div','note','MWh por día, sistema peninsular. Fuente: REData.'))}
 
-function renderCase(c){const b=$('casebox');if(!c){b.textContent='No disponible.';return}
-  const v=c.demand.values,W=700,H=170,mx=Math.max(...v);
-  const s=sv('svg',{viewBox:'0 0 '+W+' '+(H+20),role:'img','aria-label':'Demanda horaria el 28 y 29 de abril de 2025'});
-  const L=line(v,W,H,{max:mx});
-  s.append(sv('path',{d:L.path+' L'+L.pts[L.pts.length-1][0]+' '+H+' L'+L.pts[0][0]+' '+H+'Z',fill:'#d6182a',opacity:.14}),sv('path',{d:L.path,fill:'none',stroke:'#d6182a','stroke-width':2.6}));
-  const cx=L.pts[12][0];s.append(sv('line',{x1:cx,x2:cx,y1:0,y2:H,stroke:'#d98a00','stroke-dasharray':'4 3'}),sv('text',{x:cx+6,y:14,class:'axis',fill:'#b06f00'},'~12:30 · colapso'));
-  [[0,'28 abr 00h'],[24,'29 abr 00h'],[47,'23h']].forEach(([i,t])=>s.appendChild(sv('text',{x:L.pts[i][0],y:H+14,class:'axis','text-anchor':i===47?'end':i===0?'start':'middle'},t)));
-  const ul=h('ul','causes');c.causes.forEach(t=>ul.appendChild(h('li',null,t)));
-  const links=h('div','note');c.links.forEach((l,i)=>{if(i)links.appendChild(document.createTextNode(' · '));const a=h('a',null,l.t);a.href=l.u;a.target='_blank';a.rel='noopener noreferrer';links.appendChild(a)});
-  b.replaceChildren(h('p',null,c.summary),s,h('div','note',c.demand.unit+' · '+c.demand.source),h('h2',null,'Qué falló'),h('div','note',c.causes_note),ul,h('div','note',c.not_verified),links)}
+
+const LVC=sc=>sc>=75?3:sc>=50?2:sc>=25?1:0, LVCOL=['#0f9d6b','#e0a100','#e8651c','#d6182a'], scol=sc=>LVCOL[LVC(sc)];
+function gauge(score,lvl){const W=300,H=170,cx=150,cy=150,R=120,r=94,A=a=>[cx+Math.cos(Math.PI*(1-a))*R,cy-Math.sin(Math.PI*(1-a))*R],B=a=>[cx+Math.cos(Math.PI*(1-a))*r,cy-Math.sin(Math.PI*(1-a))*r];
+  const s=sv('svg',{viewBox:'0 0 '+W+' '+H,role:'img','aria-label':'Índice de vigilancia '+score+' de 100, nivel '+lvl});
+  [[0,.25],[.25,.5],[.5,.75],[.75,1]].forEach(([a,b],i)=>{const p=A(a),q=A(b),p2=B(b),q2=B(a);s.append(sv('path',{d:'M'+p+' A'+R+' '+R+' 0 0 1 '+q+' L'+p2+' A'+r+' '+r+' 0 0 0 '+q2+'Z',fill:LVCOL[i],opacity:LVC(score)===i?1:.28}))});
+  const a=score/100,n=A(a),m=[cx+Math.cos(Math.PI*(1-a))*(r-10),cy-Math.sin(Math.PI*(1-a))*(r-10)];
+  s.append(sv('line',{x1:cx,y1:cy,x2:m[0],y2:m[1],stroke:'#0f1b2d','stroke-width':4,'stroke-linecap':'round'}),sv('circle',{cx,cy,r:8,fill:'#0f1b2d'}),
+    sv('text',{x:cx,y:cy-26,'text-anchor':'middle','font-size':34,'font-weight':800,fill:scol(score)},String(score)),sv('text',{x:cx-R,y:cy+16,class:'axis','text-anchor':'middle'},'0'),sv('text',{x:cx+R,y:cy+16,class:'axis','text-anchor':'middle'},'100'));return s}
+function fval(f){if(f.value==null||f.value==='')return '—';if(f.id==='press')return f.value;return (typeof f.value==='number'?f.value.toLocaleString('es-ES'):f.value)+' '+f.unit}
+function ctlChart(ser){const W=700,H=150,L=34,R=8,T=8,B=20,X=m=>L+m/1440*(W-L-R),Y=v=>T+(1-v/100)*(H-T-B),M=t=>+t.slice(0,2)*60+(+t.slice(3,5));
+  const s=sv('svg',{viewBox:'0 0 '+W+' '+H,role:'img','aria-label':'Índice de vigilancia a lo largo de hoy'});
+  [[0,25,0],[25,50,1],[50,75,2],[75,100,3]].forEach(([a,b,i])=>s.append(sv('rect',{x:L,y:Y(b),width:W-L-R,height:Y(a)-Y(b),fill:LVCOL[i],opacity:.08})));
+  [0,25,50,75,100].forEach(v=>s.append(sv('text',{x:L-5,y:Y(v)+4,class:'axis','text-anchor':'end'},String(v))));
+  for(let hh=0;hh<=24;hh+=3)s.append(sv('text',{x:X(hh*60),y:H-4,class:'axis','text-anchor':hh===0?'start':hh===24?'end':'middle'},String(hh).padStart(2,'0')+'h'));
+  if(ser.length){const pts=ser.map(x=>[X(M(x.t)),Y(x.score)]),d=pts.map((p,i)=>(i?'L':'M')+p[0].toFixed(1)+' '+p[1].toFixed(1)).join(' ');
+    s.append(sv('path',{d:d+' L'+pts[pts.length-1][0]+' '+Y(0)+' L'+pts[0][0]+' '+Y(0)+'Z',fill:'#1b6fe0',opacity:.12}),sv('path',{d,fill:'none',stroke:'#1b6fe0','stroke-width':2.2,'stroke-linejoin':'round'}));
+    const mx=ser.reduce((a,x)=>x.score>a.score?x:a,ser[0]);if(mx.score>=25){const t=sv('title',{},mx.t+' · '+mx.score);s.append(sv('circle',{cx:X(M(mx.t)),cy:Y(mx.score),r:4.5,fill:scol(mx.score),stroke:'#fff','stroke-width':1.5},null));s.lastChild.appendChild(t)}}
+  return s}
+function renderCtl(c){const b=$('ctlbox');if(!c||!c.factors){b.replaceChildren(h('div','note','Sin datos de control todavía.'));return}
+  const lc=LVC(c.score),left=h('div','gau',null,[gauge(c.score,c.level),h('div','lv lvc'+lc,c.level),
+    h('small',null,c.driver?'Señal principal: '+c.driver:'Sin señales de anomalía'),h('small',null,c.age_min==null?'':'Última lectura hace '+c.age_min+' min')]);
+  const rows=c.factors.map(f=>h('div','fr',null,[h('b',null,f.name),(()=>{const bar=h('div','bar',null,[h('i')]);bar.firstChild.style.width=Math.max(2,f.score)+'%';bar.firstChild.style.background=scol(f.score);return bar})(),h('div','v',fval(f)),h('div','ht',f.hint)]));
+  const det=h('details',null,null,[h('summary',null,'Qué puede y qué no puede hacer este índice'),h('ul',null,null,[...c.limits.map(t=>h('li',null,t)),
+    h('li',null,'Prueba con el apagón del 28-A: con las lecturas horarias publicadas, durante la mañana el índice no dio ninguna señal previa (siempre por debajo de 25) y la lectura de las 12:00, ya con el colapso dentro, marcó crítico (−46 % en una hora). Es decir: detecta, no anticipa.')])]);
+  b.replaceChildren(h('div','cg',null,[left,h('div',null,null,rows)]),h('div','ctlfoot',null,[h('div','note','Índice de hoy (cada punto, una lectura de 5 min). Se calcula con la demanda real frente a la prevista y su variación en 15 min.'),ctlChart(c.series||[]),det,
+    h('div','note','Informativo, no certificado. No sustituye los avisos de Red Eléctrica ni de Protección Civil.')]))}
+async function loadCtl(){try{renderCtl(await j('/api/control'))}catch(e){}}
+
+const hrR=l=>{if(!l||!l.length)return '—';const o=[];let a=l[0],p=l[0];for(let i=1;i<=l.length;i++){if(l[i]===p+1){p=l[i];continue}o.push(String(a).padStart(2,'0')+':00–'+String(p+1).padStart(2,'0')+':00');a=p=l[i]}return o.join(' · ')};
+const pcol=v=>v<=5?'#0f9d6b':v<=80?'#3aa655':v<=150?'#e0a100':v<=250?'#e8651c':'#d6182a';
+let PSEL=0,PDATA=null;
+function renderPrice(p){PDATA=p;const b=$('pbox');if(!p||!p.days||!p.days.length){b.replaceChildren(h('div','note','Sin precios todavía.'));return}drawPrice()}
+function drawPrice(){const p=PDATA,b=$('pbox'),days=p.days.filter(d=>d.spot&&d.spot.length),d=days[Math.min(PSEL,days.length-1)],today=days[0]===d;
+  const tabs=days.length>1?h('div','ptabs',null,days.slice(0,2).map((x,i)=>{const t=h('button',i===PSEL?'on':'',i===0?'Hoy':'Mañana');t.type='button';t.onclick=()=>{PSEL=i;drawPrice()};return t})):null;
+  const now=today?p.now:null,pv=d.pvpc||[],ph=pv.length?pv[Math.min(pv.length-1,new Date().getHours())][1]:null;
+  const head=h('div','rthead',null,[h('div',null,null,[h('div','big',null,[tx(now==null?'—':now.toLocaleString('es-ES',{maximumFractionDigits:2})),h('span','unit','€/MWh')]),h('small',null,(today?'ahora, mercado mayorista (spot)':'previsto para mañana')+(today&&ph!=null?' · PVPC '+ph.toLocaleString('es-ES',{maximumFractionDigits:0})+' €/MWh':''))]),
+    now==null?null:h('span','bdg '+(now<=5?'ok':now<=150?'warn':'bad'),now<=0?'Precio ≤ 0':now<=5?'Muy barata':now<=80?'Barata':now<=150?'Media':'Cara')]);
+  const W=640,H=210,L=44,R=8,T=10,B=22,sp=d.spot,vals=sp.map(x=>x[1]);let lo=Math.min(0,...vals),hi=Math.max(...vals,10);const step=hi-lo>250?100:hi-lo>100?50:20;lo=Math.floor(lo/step)*step;hi=Math.ceil(hi/step)*step;
+  const X=m=>L+m/1440*(W-L-R),Y=v=>T+(1-(v-lo)/(hi-lo))*(H-T-B);
+  const s=sv('svg',{viewBox:'0 0 '+W+' '+H,role:'img','aria-label':'Precio de la electricidad cada 15 minutos'});
+  for(let v=lo;v<=hi;v+=step)s.append(sv('line',{x1:L,x2:W-R,y1:Y(v),y2:Y(v),stroke:v===0?'#9fb0c6':'#e3eaf4'}),sv('text',{x:L-6,y:Y(v)+4,class:'axis','text-anchor':'end'},String(v)));
+  for(let hh=0;hh<=24;hh+=3)s.append(sv('text',{x:X(hh*60),y:H-5,class:'axis','text-anchor':hh===0?'start':hh===24?'end':'middle'},String(hh).padStart(2,'0')+'h'));
+  const bw=(W-L-R)/96;sp.forEach(([m,v])=>{const y0=Y(Math.max(0,lo)),y=Y(v);s.append(sv('rect',{x:X(m)+.5,y:Math.min(y,y0),width:Math.max(1,bw-1),height:Math.max(1.5,Math.abs(y0-y)),fill:pcol(v),rx:1.5},null));s.lastChild.appendChild(sv('title',{},String(Math.floor(m/60)).padStart(2,'0')+':'+String(m%60).padStart(2,'0')+' · '+v.toLocaleString('es-ES')+' €/MWh'))});
+  if(today){const n=new Date(),m=n.getHours()*60+n.getMinutes();s.append(sv('line',{x1:X(m),x2:X(m),y1:T,y2:H-B,stroke:'#0f1b2d','stroke-dasharray':'4 3',opacity:.6}),sv('text',{x:X(m)+4,y:T+10,class:'axis'},'ahora'))}
+  const st=d.stats,stats=h('div','stats',null,[tile('Mínimo',st.min.v.toLocaleString('es-ES')+' €',st.min.at),tile('Máximo',st.max.v.toLocaleString('es-ES')+' €',st.max.at),tile('Media del día',st.avg.toLocaleString('es-ES')+' €'),
+    tile('Horas más baratas',hrR(st.cheap)||'—'),tile('Horas más caras',hrR(st.dear))]);
+  b.replaceChildren(...[tabs,head,s,stats,h('div','note','Precio del mercado diario en €/MWh (sin peajes ni cargos), una barra cada 15 min. Verde: ≤ 5 €. El PVPC es la tarifa regulada del hogar. Fuente: REData.')].filter(Boolean))}
 
 async function j(u){const r=await fetch(u,{cache:'no-store'});if(!r.ok)throw new Error(r.status);return r.json()}
-async function load(){try{const d=await j('/api/resumen');renderAlerts(d.alerts||[]);window.__alerts=d.alerts||[];window.mapaAlerts&&window.mapaAlerts(window.__alerts);renderRT(d.realtime);renderSys(d.systems);renderGen(d.generation);renderHist(d.history);
+async function load(){try{const d=await j('/api/resumen');renderAlerts(d.alerts||[]);window.__alerts=d.alerts||[];window.mapaAlerts&&window.mapaAlerts(window.__alerts);renderRT(d.realtime);renderSys(d.systems);renderGen(d.generation);renderHist(d.history);renderPrice(d.prices);
   $('upd').textContent='actualizado '+new Date(d.now).toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'})}catch(e){$('upd').textContent='sin conexión'}}
-load();setInterval(load,120000);
-j('/api/caso/28a').then(renderCase).catch(()=>renderCase(null));
+load();setInterval(load,120000);loadCtl();setInterval(loadCtl,60000);
 </script>
 <script src="/mapa.js" defer></script>
 </body>
