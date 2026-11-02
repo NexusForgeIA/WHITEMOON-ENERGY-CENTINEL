@@ -17,7 +17,10 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="https://whitemoon-energy-centinel.onrender.com/og-image.png">
 <link rel="icon" type="image/png" href="/favicon.png">
-<link rel="apple-touch-icon" href="/favicon.png">
+<link rel="apple-touch-icon" href="/icon-192.png">
+<link rel="manifest" href="/manifest.webmanifest">
+<meta name="theme-color" content="#c4121f">
+<link rel="alternate" type="application/atom+xml" title="Alertas Red-Sentinel" href="/alertas.atom">
 <link rel="stylesheet" href="/vendor/maplibre/maplibre-gl.css">
 <script src="/vendor/maplibre/maplibre-gl.js" defer></script>
 <style>
@@ -92,6 +95,16 @@ footer{color:var(--mut);font-size:12px;padding:4px 6px 18px}
 @media(max-width:560px){#sys{grid-template-columns:1fr!important}.rtleg{margin-left:0}header .lg{height:44px}.mbox{height:60vh;min-height:340px}.chip{padding:5px 10px;font-size:12px}body{padding:8px;gap:10px}header{padding:12px 14px}.card .big{font-size:22px}
  .al{grid-template-columns:40px 1fr;padding:10px 11px}.al .ic{width:40px;height:40px;font-size:20px}.al .sv{grid-column:2;grid-row:auto;justify-self:start;margin-bottom:3px}
  #banner{padding:9px 12px}#banner .ei{font-size:22px}.legend{grid-template-columns:1fr 1fr}}
+.btn{display:inline-block;border:1px solid var(--line);background:#fff;color:var(--txt);border-radius:10px;padding:8px 14px;font:inherit;font-weight:700;font-size:13.5px;text-decoration:none;cursor:pointer}.btn.pri{background:#c4121f;border-color:#c4121f;color:#fff}.btn:hover{filter:brightness(.96)}
+.scs{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:10px}.sc{border:1px solid var(--line);border-radius:14px;padding:12px;background:#f7faff;display:grid;gap:6px;align-content:start}.sc small{color:var(--mut);font-size:12.5px}
+.mlist{display:grid;gap:6px;margin:8px 0}.mrow{display:flex;flex-wrap:wrap;gap:4px 10px;align-items:center;border:1px solid var(--line);border-radius:12px;padding:7px 10px;font-size:13.5px}.mrow .mlv{color:#fff;font-size:11.5px;font-weight:800;border-radius:99px;padding:2px 9px}.mrow small{color:var(--mut);margin-left:auto}
+.tlist{display:grid;gap:6px;margin:8px 0}.trow{display:grid;grid-template-columns:minmax(150px,1.2fr) minmax(110px,.9fr) minmax(190px,1.6fr) minmax(190px,1.6fr) auto;gap:4px 12px;align-items:center;border:1px solid var(--line);border-radius:12px;padding:8px 12px;font-size:13.5px}.trow small{color:var(--mut)}.trow .tg b{color:#0b6b49}.trow .tb{color:var(--mut)}.trow .ts{font-weight:800;color:#0b6b49;text-align:right}
+.hcols{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:6px}.hcol h3{margin:0 0 6px;font-size:13px;color:var(--mut);text-transform:uppercase;letter-spacing:.05em}.hrow{display:flex;flex-wrap:wrap;gap:4px 10px;align-items:center;border-bottom:1px solid var(--line);padding:6px 0;font-size:13.5px}.hrow.red b{color:var(--bad)}
+.mth table{border-collapse:collapse;width:100%;font-size:12.5px;margin:6px 0}.mth th,.mth td{border:1px solid var(--line);padding:5px 8px;text-align:left}.mth th{background:#f1f6fd}
+.guia{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin-top:8px}.guia h3{margin:0 0 6px;font-size:14px}.guia ul{margin:0;padding-left:18px;font-size:13.5px}.guia li{margin:4px 0}
+.b2b{display:grid;grid-template-columns:1.4fr 1fr;gap:18px;align-items:center}.b2b ul{margin:6px 0 0;padding-left:18px;font-size:14px}.b2b .cta{display:flex;flex-wrap:wrap;gap:8px}
+details.pn>summary{cursor:pointer;font-weight:800;font-size:15px}
+@media(max-width:900px){.trow{grid-template-columns:1fr 1fr}.trow .ts{text-align:left}.hcols,.guia,.b2b{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
@@ -108,6 +121,11 @@ footer{color:var(--mut);font-size:12px;padding:4px 6px 18px}
 
 <section class="panel" id="ctl"><h2>Control de red · índice de vigilancia</h2><div id="ctlbox"><div class="note">Cargando…</div></div></section>
 
+<section class="grid g2">
+  <div class="panel"><h2>Avisos meteorológicos · contexto de riesgo</h2><div id="meteo"><div class="note">Cargando…</div></div></div>
+  <div class="panel"><h2>Recibe los avisos de caída</h2><div id="subs"><div class="note">Cargando…</div></div></div>
+</section>
+
 <section class="panel" id="mapa"></section>
 
 <section class="grid g2">
@@ -119,9 +137,26 @@ footer{color:var(--mut);font-size:12px;padding:4px 6px 18px}
 <section class="panel"><h2>Demanda peninsular · últimos 30 días</h2><div id="hist"></div></section>
 <section class="panel" id="precio"><h2>Precio de la luz · mercado mayorista</h2><div id="pbox"><div class="note">Cargando…</div></div></section>
 
+<section class="panel"><h2>Qué significa para ti · cuándo consumir</h2><div id="tips"><div class="note">Cargando…</div></div></section>
+
+<section class="panel"><h2>Historial de alertas y metodología</h2><div id="histal"><div class="note">Cargando…</div></div></section>
+
+<section class="panel"><details class="pn"><summary>🔦 Qué hacer ante un apagón (guía rápida)</summary>
+  <div class="guia">
+    <div><h3>Antes · prepárate</h3><ul><li>Linterna y pilas de repuesto; radio a pilas o de manivela.</li><li>Batería externa (powerbank) cargada.</li><li>Agua (unos 3 L por persona para 2 días) y comida que no necesite cocinar.</li><li>Botiquín y medicación habitual.</li><li>Algo de efectivo en billetes pequeños.</li><li>Depósito del coche por encima de la mitad.</li></ul></div>
+    <div><h3>Durante</h3><ul><li>Mantén la calma e infórmate por radio y fuentes oficiales.</li><li>Usa linterna, no velas.</li><li>Desconecta aparatos sensibles y deja una luz encendida para saber cuándo vuelve.</li><li>No abras frigorífico ni congelador sin necesidad.</li><li>Llama al 112 solo en emergencias; usa mensajes para no saturar las líneas.</li><li>Ayuda a vecinos mayores o dependientes. Nunca uses braseros ni generadores dentro de casa.</li><li>Con semáforos apagados, trátalos como un «ceda el paso» y extrema la precaución.</li></ul></div>
+    <div><h3>Después</h3><ul><li>Reconecta los aparatos poco a poco, uno a uno.</li><li>Tira los alimentos que hayan estado mucho tiempo sin frío.</li><li>Revisa la instalación si notas olor a quemado o chispas.</li><li>Recarga móviles y baterías y reponer lo gastado.</li></ul></div>
+  </div>
+  <div class="note">Resumen general orientativo. Sigue siempre las indicaciones de Protección Civil y de las autoridades.</div></details></section>
+
+<section class="panel b2b"><div><h2 style="margin-top:0">Para empresas e instituciones</h2>
+  <div>¿Hospitales, industria, logística, ayuntamientos o centros de datos? Montamos <b>avisos a medida</b> y un <b>panel de marca blanca</b> con tus ubicaciones, tus umbrales y tu canal de alerta.</div>
+  <ul><li>Alertas de caída y avisos meteorológicos de tu zona, en tu móvil o tu sistema.</li><li>Panel con tu marca y tus instalaciones sobre el mapa de la red.</li><li>Informes e integración en tu centro de control.</li></ul></div>
+  <div class="cta"><a class="btn pri" href="https://wa.me/34643199580?text=Hola%2C%20me%20interesa%20Red-Sentinel%20para%20mi%20empresa" target="_blank" rel="noopener noreferrer">Hablar por WhatsApp</a><a class="btn" href="https://whitemoon.es" target="_blank" rel="noopener noreferrer">whitemoon.es</a></div></section>
+
 <footer>
   Fuentes: Red Eléctrica de España, <a href="https://www.ree.es/es/datos/apidatos" target="_blank" rel="noopener">REData</a> (demanda y generación; Canarias, Baleares, Ceuta y Melilla solo con datos diarios y retraso).
-  Informativo, no certificado, solo datos públicos. No sustituye a los avisos de Red Eléctrica, Protección Civil ni de los operadores.
+  Avisos meteorológicos: AEMET vía MeteoAlarm.org · <a href="/alertas.atom">Feed de alertas</a>. Informativo, no certificado, solo datos públicos. No sustituye a los avisos de Red Eléctrica, Protección Civil ni de los operadores.
 </footer>
 
 <script>
@@ -264,7 +299,7 @@ function ctlChart(ser){const W=700,H=150,L=34,R=8,T=8,B=20,X=m=>L+m/1440*(W-L-R)
   return s}
 function renderCtl(c){const b=$('ctlbox');if(!c||!c.factors){b.replaceChildren(h('div','note','Sin datos de control todavía.'));return}
   const ser=c.series||[],F=id=>c.factors.find(x=>x.id===id),mx=ser.reduce((a,x)=>x.score>a.score?x:a,ser[0]||{score:0,t:''}),n25=ser.filter(x=>x.score>=25).length,n50=ser.filter(x=>x.score>=50).length;
-  const sp=v=>v==null?'—':(v>0?'+':v<0?'−':'')+Math.abs(v).toLocaleString('es-ES')+' %',dev=F('dev'),rp=F('ramp'),osc=F('osc'),pr=F('price'),st=F('stale'),rl=F('rules');
+  const sp=v=>v==null?'—':(v>0?'+':v<0?'−':'')+Math.abs(v).toLocaleString('es-ES')+' %',dev=F('dev'),rp=F('ramp'),osc=F('osc'),mt=F('meteo'),st=F('stale'),rl=F('rules');
   const kc=(l,v,sub,score,hint)=>{const e=h('div','kc',null,[h('small',null,l),h('b',score!=null?'lvc'+LVC(score):null,v),sub?h('em',null,sub):null]);
     if(score!=null){const bar=h('div','bar',null,[h('i')]);bar.firstChild.style.width=Math.max(3,score)+'%';bar.firstChild.style.background=scol(score);e.append(bar)}if(hint)e.title=hint;return e};
   const lc=LVC(c.score),hero=h('div','hero hero'+lc,null,[gauge(c.score,c.level),h('div','lv lvc'+lc,c.level),
@@ -278,7 +313,7 @@ function renderCtl(c){const b=$('ctlbox');if(!c||!c.factors){b.replaceChildren(h
     kc('Reglas de caída activas',String(nr),nr?c.rules.map(x=>x.rule).join(' · '):'ninguna',rl&&rl.score,rl&&rl.hint),
     kc('Máximo del índice hoy',String(mx.score),mx.score?'a las '+mx.t:'sin picos',mx.score,'Valor más alto del índice en las lecturas de hoy.'),
     kc('Tiempo en alerta hoy',(n25*5)+' min',n50?(n50*5)+' min en nivel Alto':'sin llegar a Alto',n50?55:n25?30:0,'Minutos con el índice en Atención o más (lecturas de 5 min).'),
-    kc('Precio mayorista',pr&&pr.value!=null?pr.value.toLocaleString('es-ES'):'—','€/MWh · contexto, no sube el nivel',null,pr&&pr.hint)]);
+    kc('Avisos meteorológicos',mt?String((mt.value||'').split(' ')[0]+'/'+(mt.value||'').split('· ')[1].split(' ')[0]):'—','rojos / naranjas de viento, tormenta…',mt&&mt.score,mt&&mt.hint)]);
   const chips=h('div','rchips',null,nr?c.rules.map(x=>{const e=h('span','rc'+(x.sev==='muy alta'?' red':''),null,[h('b',null,x.rule),tx(' '+x.title)]);return e}):[h('span','rc ok',null,[tx('✓ Ninguna regla de caída activa')])]);
   const det=h('details',null,null,[h('summary',null,'Qué puede y qué no puede hacer este índice'),h('ul',null,null,[...c.limits.map(t=>h('li',null,t)),
     h('li',null,'Prueba con el apagón del 28-A: con las lecturas horarias publicadas, durante la mañana el índice no dio ninguna señal previa (siempre por debajo de 25) y la lectura de las 12:00, ya con el colapso dentro, marcó crítico (−46 % en una hora). Es decir: detecta, no anticipa.')])]);
@@ -311,6 +346,7 @@ async function load(){try{const d=await j('/api/resumen');renderAlerts(d.alerts|
   $('upd').textContent='actualizado '+new Date(d.now).toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'})}catch(e){$('upd').textContent='sin conexión'}}
 load();setInterval(load,120000);loadCtl();setInterval(loadCtl,60000);
 </script>
+<script src="/extras.js"></script>
 <script src="/mapa.js" defer></script>
 </body>
 </html>

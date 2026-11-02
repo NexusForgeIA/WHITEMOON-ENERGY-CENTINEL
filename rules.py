@@ -29,6 +29,13 @@ def n(x):
     return f"{round(x):,}".replace(",", ".")
 
 
+HOLIDAYS = {"01-01", "01-06", "05-01", "08-15", "10-12", "11-01", "12-06", "12-08", "12-25"}      # festivos nacionales: la demanda baja y es normal
+
+
+def is_holiday(d):
+    return d[5:10] in HOLIDAYS
+
+
 def _alert(rule, zone, sev, title, detail, value, threshold, at=None, **kw):
     name, lat, lon = ZONES.get(zone, (zone, None, None))
     return {"id": f"{rule}-{zone}", "type": "regla", "rule": rule, "zone": name, "place": name, "sev": sev, "lat": lat, "lon": lon,
@@ -86,7 +93,7 @@ def system_rules(systems, today):
             age = (today - date.fromisoformat(d)).days
         except ValueError:
             continue
-        if age > MAX_LAG_DAYS or dev > -0.10:
+        if age > MAX_LAG_DAYS or dev > -0.10 or is_holiday(d):
             continue
         sev = "muy alta" if dev <= -0.25 else "alta"
         out.append(_alert("R-SYS", k, sev, f"Demanda de {s['name']} {dev * 100:.0f} % el {d[8:10]}/{d[5:7]}".replace(".", ","),
@@ -126,3 +133,55 @@ def evaluate(rt, systems, nuclear, sites, now=None, today=None):
     out = realtime_rules(rt, now) + system_rules(systems, today) + nuclear_rules(nuclear, sites, today)
     out.sort(key=lambda a: (a["sev"] != "muy alta", a["rule"]))
     return out
+
+
+def replay_realtime(rt):
+    """Reproduce las reglas de tiempo real sobre las lecturas de hoy → episodios [{rule, sev, start, end, n, value, title}], el más reciente primero."""
+    hist = (rt or {}).get("history") or []
+    ev = {}
+    for i in range(24, len(hist)):
+        for a in realtime_rules({"history": hist[:i + 1]}, risk.ts_of(hist[i]["t"]) + 60):
+            k = (a["rule"], a["at"])
+            if k not in ev or a["sev"] == "muy alta":
+                ev[k] = a
+    out = []
+    for a in sorted(ev.values(), key=lambda a: (a["rule"], a["at"])):
+        last = out[-1] if out else None
+        if last and last["rule"] == a["rule"] and risk.ts_of(a["at"]) - risk.ts_of(last["end"]) <= 1800:
+            last["end"], last["n"] = a["at"], last["n"] + 1
+            if a["sev"] == "muy alta":
+                last["sev"] = "muy alta"
+            if abs(a["value"]) > abs(last["value"]):
+                last["value"], last["title"] = a["value"], a["title"]
+        else:
+            out.append({"rule": a["rule"], "sev": a["sev"], "start": a["at"], "end": a["at"], "n": 1, "value": a["value"], "title": a["title"]})
+    out.sort(key=lambda e: e["start"], reverse=True)
+    return out
+
+
+def daily_hits(systems):
+    """Días de los últimos ~35 en que la demanda diaria de un sistema cayó ≥10 % bajo la mediana de su mismo día de la semana."""
+    out, days = [], 0
+    for k, s in (systems or {}).items():
+        daily = s.get("daily") or []
+        days = max(days, len(daily))
+        for i in range(14, len(daily)):
+            d, v = daily[i]
+            wd = date.fromisoformat(d).weekday()
+            m = risk.median([x for dd, x in daily[:i] if date.fromisoformat(dd).weekday() == wd])
+            if not m:
+                continue
+            dev = (v - m) / m
+            if dev <= -0.10:
+                out.append({"date": d, "zone": s.get("name", k), "dev": round(dev * 100, 1), "sev": "muy alta" if dev <= -0.25 else "alta", "holiday": is_holiday(d)})
+    out.sort(key=lambda h: h["date"], reverse=True)
+    return out, days
+
+
+def history(rt, systems):
+    ep = replay_realtime(rt)
+    hits, days = daily_hits(systems)
+    hist = (rt or {}).get("history") or []
+    return {"realtime": {"episodes": ep, "readings": len(hist), "since": hist[0]["t"][11:16] if hist else None},
+            "daily": {"hits": hits, "days": days}, "rules": RULES,
+            "note": "Reconstruido con las lecturas de hoy y los datos diarios de REData; no hay base de datos de histórico largo. Una regla que salta no confirma un apagón."}

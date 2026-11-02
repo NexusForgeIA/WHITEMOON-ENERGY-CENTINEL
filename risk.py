@@ -104,7 +104,13 @@ def f_stale(age_min):
     return 0 if age_min is None or age_min <= 20 else 30 if age_min <= 60 else 50
 
 
-def compute(rt, price_now, alerts, now=None):
+def f_meteo(m):
+    """Avisos naranja/rojo de viento, tormentas, nieve, calor o incendios activos: contexto (tope 30), nunca lo sube solo a Crítico."""
+    g = (m or {}).get("grid") or {}
+    return 30 if g.get("rojo") else 15 if g.get("naranja") else 0
+
+
+def compute(rt, price_now, alerts, now=None, meteo=None):
     now = now or time.time()
     hist = (rt or {}).get("history") or []
     fac = []
@@ -123,6 +129,9 @@ def compute(rt, price_now, alerts, now=None):
         cur, base = oscillation([h["real"] for h in hist])
         fac.append({"id": "osc", "name": "Oscilación de la demanda (1 h)", "score": f_osc(cur, base), "value": None if cur is None else round(cur), "unit": "MW",
                     "hint": "Variación media entre lecturas de 5 min; ámbar desde ~400 MW si triplica lo habitual del día."})
+    g = (meteo or {}).get("grid") or {}
+    fac.append({"id": "meteo", "name": "Avisos meteorológicos", "score": f_meteo(meteo), "value": f"{g.get('rojo', 0)} rojos · {g.get('naranja', 0)} naranjas", "unit": "",
+                "hint": "Avisos AEMET naranja/rojo activos de viento, tormentas, nieve, calor o incendios. Es contexto: tope 30."})
     ps, who = f_rules(alerts)
     fac.append({"id": "rules", "name": "Reglas de caída activas", "score": ps, "value": who and who.get("rule"), "unit": "",
                 "hint": "R-DEM-DROP, R-DEM-DEV, R-OSC (península, 5 min) y R-SYS, R-NUC (diarias, con retraso)."})

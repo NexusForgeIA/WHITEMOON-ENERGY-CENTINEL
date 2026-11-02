@@ -9,13 +9,18 @@ import time
 import urllib.parse
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
+import meteo
+import notify
 import rules
 import grid
 import risk
 import redata
 
 ROOT = os.path.dirname(os.path.abspath(__file__))
-RED = GRID = None
+RED = GRID = METEO = NOTIFIER = None
+SITE = os.environ.get("SITE_URL", "https://whitemoon-energy-centinel.onrender.com")
+NTFY_TOPIC = os.environ.get("NTFY_TOPIC", "redsentinel-es-4x9k2m")
+mimetypes.add_type("application/manifest+json", ".webmanifest")
 
 
 def load_case(cid):
@@ -43,11 +48,21 @@ def api(path, query):
     if path == "/api/alertas":
         return 200, {"alerts": rule_alerts(), "rules": rules.RULES,
                      "source": "Reglas calculadas con datos de Red Eléctrica (REData). Informativo; sin datos por central o subestación."}
+    if path == "/api/meteo":
+        return 200, METEO.view() if METEO else {"counts": {}, "top": [], "status": {"state": "desactivado"}}
+    if path == "/api/historial":
+        v = RED.view() if RED else {}
+        return 200, rules.history(v.get("realtime"), v.get("systems"))
+    if path == "/api/config":
+        tg = os.environ.get("TELEGRAM_LINK")
+        return 200, {"ntfy": {"topic": NTFY_TOPIC, "url": "https://ntfy.sh/" + NTFY_TOPIC}, "telegram": tg or None, "atom": "/alertas.atom", "site": SITE}
+    if path == "/alertas.atom":
+        return 200, None, notify.atom(rule_alerts(), SITE), "application/atom+xml; charset=utf-8"
     if path == "/api/red":
         return 200, GRID.view() if GRID else {"plants": [], "lines": [], "subs": [], "status": {"state": "desactivado"}}
     if path == "/api/control":
         v = RED.view() if RED else {}
-        return 200, risk.compute(v.get("realtime"), RED.price_now() if RED else None, rule_alerts())
+        return 200, risk.compute(v.get("realtime"), RED.price_now() if RED else None, rule_alerts(), meteo=METEO.view() if METEO else None)
     if path == "/api/sistemas":
         return 200, RED.view() if RED else {"systems": {}, "status": {"state": "desactivado"}}
     if path == "/api/resumen":
@@ -83,7 +98,7 @@ class H(BaseHTTPRequestHandler):
         u = urllib.parse.urlparse(self.path)
         r = api(u.path, urllib.parse.parse_qs(u.query))
         if r:
-            return self._send(r[0], r[1])
+            return self._send(r[0], r[1]) if len(r) == 2 else self._send(r[0], raw=r[2], ctype=r[3])
         name = "index.html" if u.path in ("/", "/index.html") else u.path.lstrip("/")
         f = os.path.normpath(os.path.join(ROOT, "web", name))
         if not f.startswith(os.path.join(ROOT, "web")) or not os.path.isfile(f):
@@ -93,15 +108,19 @@ class H(BaseHTTPRequestHandler):
 
 
 def main():
-    global RED, GRID
+    global RED, GRID, METEO, NOTIFIER
     ap = argparse.ArgumentParser()
     ap.add_argument("--host", default="127.0.0.1")
     ap.add_argument("--port", type=int, default=int(os.environ.get("PORT", 8080)))
     a = ap.parse_args()
     GRID = grid.Grid(cache=os.path.join(ROOT, "data", "grid_cache.json"), use_seed=True)
+    METEO = meteo.Meteo()
+    NOTIFIER = notify.Notifier(SITE, NTFY_TOPIC, os.environ.get("TELEGRAM_BOT_TOKEN"), os.environ.get("TELEGRAM_CHAT_ID"))
     RED = redata.RedData(cache=os.path.join(ROOT, "data", "redata_cache.json"))
     if os.environ.get("RG_OFFLINE") != "1":
         RED.start()
+        METEO.start()
+        NOTIFIER.start(rule_alerts)
         GRID.start()
     else:
         GRID._set({"plants": [], "lines": [], "subs": []})

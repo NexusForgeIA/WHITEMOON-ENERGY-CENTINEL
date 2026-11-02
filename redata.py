@@ -67,7 +67,7 @@ def summarize(vals):
     return {"date": last_dt[:10], "mwh": round(last), "mean_prev": round(mean) if mean else None,
             "deviation": round((last - mean) / mean, 3) if mean else None,
             "dow_mean": round(dow) if dow else None, "dow_dev": round((last - dow) / dow, 3) if dow else None,
-            "series": [{"date": d[:10], "mwh": round(v)} for d, v in vals[-9:]],
+            "series": [{"date": d[:10], "mwh": round(v)} for d, v in vals[-9:]], "daily": [[d[:10], round(v)] for d, v in vals],
             "max": {"date": hi[0][:10], "mwh": round(hi[1])}, "min": {"date": lo[0][:10], "mwh": round(lo[1])}}
 
 

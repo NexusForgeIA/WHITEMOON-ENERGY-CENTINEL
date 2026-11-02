@@ -1,0 +1,11 @@
+name: keepalive
+# Render (plan gratuito) duerme la web sin visitas; este ping cada 10 min la mantiene despierta y los avisos funcionando.
+on:
+  schedule:
+    - cron: "*/10 * * * *"
+  workflow_dispatch:
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - run: curl -fsS --max-time 60 https://whitemoon-energy-centinel.onrender.com/healthz
