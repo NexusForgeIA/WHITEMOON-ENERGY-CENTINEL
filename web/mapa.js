@@ -16,7 +16,7 @@ function build(){
   const chips=el('div','mchips'),views=el('div','mviews');
   Object.keys(G).forEach(k=>{const b=el('button','chip on',null,[el('i'),el('span',null,G[k][0]),el('em',null,'')]);b.firstChild.style.background=G[k][1];b.dataset.k=k;b.type='button';
     b.onclick=()=>{ON[k]=ON[k]?0:1;b.classList.toggle('on',!!ON[k]);apply()};chips.appendChild(b)});
-  [['l400','Líneas 400 kV','#d6182a'],['l220','Líneas 220 kV','#f08a24'],['subs','Subestaciones','#111827'],['alerts','Alertas de apagón','#d6182a']].forEach(([k,t,c])=>{
+  [['l400','Líneas 400 kV','#d6182a'],['l220','Líneas 220 kV','#f08a24'],['subs','Subestaciones','#111827'],['alerts','Reglas de caída','#d6182a']].forEach(([k,t,c])=>{
     const b=el('button','chip on',null,[el('i'),el('span',null,t)]);b.firstChild.style.background=c;b.dataset.k=k;b.type='button';
     b.onclick=()=>{ON[k]=ON[k]?0:1;b.classList.toggle('on',!!ON[k]);apply()};chips.appendChild(b)});
   Object.keys(VIEW).forEach(k=>{const b=el('button','vw',VIEW[k].t);b.type='button';b.onclick=()=>M&&M.flyTo({center:VIEW[k].c,zoom:VIEW[k].z,speed:1.4});views.appendChild(b)});
@@ -81,11 +81,13 @@ function apply(){if(!READY)return;
 
 function alertMarkers(list){
   MARKERS.forEach(m=>m.remove());MARKERS=[];if(!M||!READY)return;
-  (list||[]).filter(a=>a.type==='energia'&&COORD[a.place]).forEach(a=>{
-    const d=el('div','amk',null,[el('span','pu'),el('span','dot','⚡')]);d.title=a.title;
-    const mk=new maplibregl.Marker({element:d}).setLngLat(COORD[a.place]).addTo(M);
-    d.onclick=ev=>{ev.stopPropagation();pop(COORD[a.place],[el('b',null,a.title),el('div',null,a.detail||''),el('div','note','Detectada en prensa; sin confirmar por el operador eléctrico.')])};
-    MARKERS.push(mk)});
+  const add=(ll,a,name)=>{const d=el('div','amk',null,[el('span','pu'),el('span','dot','⚡')]);d.title=a.title;
+    const mk=new maplibregl.Marker({element:d}).setLngLat(ll).addTo(M);
+    d.onclick=ev=>{ev.stopPropagation();pop(ll,[el('b',null,a.title),name?el('div',null,name):null,el('div',null,a.detail||''),el('div','note','Regla '+a.rule+' calculada con datos de Red Eléctrica; no identifica la instalación afectada.')].filter(Boolean))};
+    MARKERS.push(mk)};
+  (list||[]).forEach(a=>{
+    if(a.points&&a.points.length)a.points.forEach(p=>add([p[1],p[0]],a,'Posible afectada: '+p[2]));
+    else if(a.lat!=null&&a.lon!=null)add([a.lon,a.lat],a)});
   apply()}
 window.mapaAlerts=l=>{ALERTS=l;if(READY)alertMarkers(l)};
 

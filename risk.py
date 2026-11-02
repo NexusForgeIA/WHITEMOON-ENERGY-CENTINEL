@@ -2,12 +2,27 @@
 
 Cada factor puntúa 0-100 y el índice es el MÁXIMO de los factores (criterio conservador: basta una señal fuerte). Niveles:
 <25 normal · 25-49 atención · 50-74 alto · ≥75 crítico. Señales que de verdad preceden a un colapso (frecuencia, tensión, inercia,
-flujos por línea) no son públicas en tiempo real; aquí solo hay demanda cada 5 min, previsión, precio y titulares de prensa."""
+flujos por línea) no son públicas en tiempo real; aquí solo hay demanda cada 5 min, previsión, precio y reglas calculadas sobre esos datos."""
 import time
 from datetime import datetime
 
 LEVELS = [(75, "Crítico"), (50, "Alto"), (25, "Atención"), (0, "Normal")]
-NATIONAL = {"Península", "Madrid", "Barcelona", "Valencia", "Andalucía", "Galicia"}   # un apagón aquí afecta a millones de personas
+
+
+def median(xs):
+    xs = sorted(xs)
+    n = len(xs)
+    return None if not n else xs[n // 2] if n % 2 else (xs[n // 2 - 1] + xs[n // 2]) / 2
+
+
+def oscillation(vals, win=12):
+    """Media del valor absoluto de la segunda diferencia (MW) en la última ventana, y la habitual del resto de la serie (mediana de ventanas)."""
+    d2 = [abs(vals[i] - 2 * vals[i - 1] + vals[i - 2]) for i in range(2, len(vals))]
+    if len(d2) < win + 24:
+        return None, None
+    cur = sum(d2[-win:]) / win
+    base = median([sum(d2[k:k + win]) / win for k in range(0, len(d2) - win, win // 2)]) or 0
+    return cur, base
 
 
 def level(score):
@@ -67,14 +82,19 @@ def f_price(p):
     return 20 if p <= 0 else 14 if p <= 2 else 6 if p <= 10 else 0
 
 
-def f_press(alerts):
+def f_osc(cur, base):
+    """Oscilación (MW de variación media entre lecturas de 5 min en la última hora) frente a la habitual del día."""
+    if cur is None or cur < 250:
+        return 0
+    return round(clamp((cur - 250) / 750 * 100) * (1 if cur >= 3 * max(base or 0, 60) else 0.4))
+
+
+def f_rules(alerts):
+    """Reglas activas (rules.py). Las de tiempo real pesan más que las diarias, que llegan con retraso."""
     s, who = 0, None
     for a in alerts or []:
-        if a.get("type") not in ("energia", "red-electrica"):
-            continue
-        nat = a.get("place") in NATIONAL
-        red = a.get("sev") == "muy alta"
-        v = (75 if red else 45) if nat else (35 if red else 20)
+        rt = a.get("rule") in ("R-DEM-DROP", "R-DEM-DEV", "R-OSC")
+        v = (75 if rt else 50) if a.get("sev") == "muy alta" else (45 if rt else 25)
         if v > s:
             s, who = v, a
     return s, who
@@ -99,13 +119,17 @@ def compute(rt, price_now, alerts, now=None):
                 "hint": "Si Red Eléctrica deja de publicar la lectura, se pierde la vigilancia (no implica fallo eléctrico)."})
     fac.append({"id": "price", "name": "Excedente renovable (precio)", "score": f_price(price_now), "value": price_now, "unit": "€/MWh",
                 "hint": "Precio mayorista cerca de 0: mucha solar y eólica; contexto, nunca sube el nivel por sí solo."})
-    ps, who = f_press(alerts)
-    fac.append({"id": "press", "name": "Incidencias en prensa", "score": ps, "value": who and who.get("place"), "unit": "",
-                "hint": "Titulares de medios sin confirmar. Peninsular o grandes zonas pesan más que una isla."})
+    if rt and hist:
+        cur, base = oscillation([h["real"] for h in hist])
+        fac.append({"id": "osc", "name": "Oscilación de la demanda (1 h)", "score": f_osc(cur, base), "value": None if cur is None else round(cur), "unit": "MW",
+                    "hint": "Variación media entre lecturas de 5 min; ámbar desde ~400 MW si triplica lo habitual del día."})
+    ps, who = f_rules(alerts)
+    fac.append({"id": "rules", "name": "Reglas de caída activas", "score": ps, "value": who and who.get("rule"), "unit": "",
+                "hint": "R-DEM-DROP, R-DEM-DEV, R-OSC (península, 5 min) y R-SYS, R-NUC (diarias, con retraso)."})
     score = max(f["score"] for f in fac)
     top = max(fac, key=lambda f: f["score"])
     return {"score": score, "level": level(score), "driver": top["name"] if score >= 25 else None, "factors": fac,
             "series": series(hist), "age_min": None if age is None else round(age), "now": int(now * 1000),
             "limits": ["Frecuencia, tensión, inercia y flujos por línea no son públicos en tiempo real.",
                        "No predice: detecta en minutos desviaciones y caídas bruscas de la demanda peninsular.",
-                       "Un apagón regional o insular solo aparece por prensa, no por datos de Red Eléctrica."]}
+                       "Sin datos por central ni subestación: las reglas se aplican a la Península (5 min), a cada sistema (diario) y a la nuclear (diario)."]}

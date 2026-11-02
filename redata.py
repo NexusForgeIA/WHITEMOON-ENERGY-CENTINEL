@@ -57,12 +57,16 @@ def summarize(vals):
     if not vals:
         return None
     last_dt, last = vals[-1]
-    prev = [v for _, v in vals[:-1]]
+    prev = [v for _, v in vals[-9:-1]]
     mean = sum(prev) / len(prev) if prev else None
+    wd = datetime.fromisoformat(last_dt[:10]).weekday()
+    same = sorted(v for d, v in vals[:-1] if datetime.fromisoformat(d[:10]).weekday() == wd)
+    dow = None if len(same) < 2 else (same[len(same) // 2] if len(same) % 2 else (same[len(same) // 2 - 1] + same[len(same) // 2]) / 2)
     allv = [v for _, v in vals]
     hi, lo = max(vals, key=lambda x: x[1]), min(vals, key=lambda x: x[1])
     return {"date": last_dt[:10], "mwh": round(last), "mean_prev": round(mean) if mean else None,
             "deviation": round((last - mean) / mean, 3) if mean else None,
+            "dow_mean": round(dow) if dow else None, "dow_dev": round((last - dow) / dow, 3) if dow else None,
             "series": [{"date": d[:10], "mwh": round(v)} for d, v in vals[-9:]],
             "max": {"date": hi[0][:10], "mwh": round(hi[1])}, "min": {"date": lo[0][:10], "mwh": round(lo[1])}}
 
@@ -86,6 +90,15 @@ def parse_generation(data):
     ren = sum(r["mwh"] for r in rows if r["kind"] == "Renovable")
     rows.sort(key=lambda r: -r["mwh"])
     return {"date": date, "total_mwh": round(total), "renewable_pct": round(ren / total, 3), "items": rows}
+
+
+def parse_nuclear(data):
+    """estructura-generacion (día) → [(fecha, MWh)] de la tecnología nuclear."""
+    for it in (data or {}).get("included") or []:
+        a = it.get("attributes") or {}
+        if "nuclear" in (a.get("title") or "").lower():
+            return [(v["datetime"][:10], v["value"]) for v in a.get("values") or [] if v.get("value") is not None]
+    return []
 
 
 def parse_realtime(data):
@@ -168,21 +181,24 @@ class RedData:
         self.systems, self.status, self.lock = {}, {"state": "pendiente"}, threading.Lock()
         self.generation, self.realtime, self.history = None, None, []
         self.prices = None
+        self.nuclear = []
         try:
             d = json.load(open(cache, encoding="utf-8"))
             self.systems, self.status = d["systems"], {"state": "caché", "fetched": d.get("fetched")}
             self.generation, self.realtime, self.history = d.get("generation"), d.get("realtime"), d.get("history") or []
             self.prices = d.get("prices")
+            self.nuclear = d.get("nuclear") or []
         except Exception:
             pass
 
     def refresh(self):
         today = madrid_now(self.now())
         start, end = (today - timedelta(days=8)).strftime("%Y-%m-%dT00:00"), today.strftime("%Y-%m-%dT23:59")
+        start35 = (today - timedelta(days=35)).strftime("%Y-%m-%dT00:00")
         out, errs = {}, {}
         for sys_ in GEO:
             try:
-                s = summarize(daily_values(self.get(url("demanda", "evolucion", start, end, "day", sys_))))
+                s = summarize(daily_values(self.get(url("demanda", "evolucion", start35, end, "day", sys_))))
                 if s:
                     out[sys_] = {"name": NAMES[sys_], **s}
                 else:
@@ -191,8 +207,10 @@ class RedData:
                 errs[sys_] = str(ex)[:80]
         gen = rt = None
         hist = []
+        nuc = []
         try:
-            gen = parse_generation(self.get(url("generacion", "estructura-generacion", start, end, "day", "peninsular")))
+            graw = self.get(url("generacion", "estructura-generacion", start, end, "day", "peninsular"))
+            gen, nuc = parse_generation(graw), parse_nuclear(graw)
         except Exception as ex:
             errs["generacion"] = str(ex)[:80]
         try:
@@ -208,6 +226,8 @@ class RedData:
         with self.lock:
             if gen:
                 self.generation = gen
+            if nuc:
+                self.nuclear = nuc
             if rt:
                 self.realtime = rt
             if pr:
@@ -219,7 +239,7 @@ class RedData:
             self.status = {"state": "ok" if out else "error", "fetched": int(self.now() * 1000), "errors": errs}
         try:
             os.makedirs(os.path.dirname(self.cache) or ".", exist_ok=True)
-            json.dump({"systems": self.systems, "generation": self.generation, "realtime": self.realtime, "history": self.history, "prices": self.prices, "fetched": self.status.get("fetched")}, open(self.cache, "w", encoding="utf-8"))
+            json.dump({"systems": self.systems, "generation": self.generation, "realtime": self.realtime, "history": self.history, "prices": self.prices, "nuclear": self.nuclear, "fetched": self.status.get("fetched")}, open(self.cache, "w", encoding="utf-8"))
         except OSError:
             pass
 
@@ -269,16 +289,9 @@ class RedData:
                     "status": self.status, "catalog": CATALOG,
                     "source": "Red Eléctrica de España · REData (apidatos.ree.es). Demanda diaria en MWh; Canarias, Baleares, Ceuta y Melilla solo con datos diarios."}
 
-    def alerts(self, drop=-0.25):
-        """Un sistema cuyo último día publicado cae mucho frente a su media reciente (con el retraso de publicación)."""
-        out = []
+    def nuclear_series(self):
         with self.lock:
-            for k, s in self.systems.items():
-                if s.get("deviation") is not None and s["deviation"] <= drop:
-                    out.append({"id": "redata-" + k, "type": "red-electrica", "sev": "alta", "trains": [], "lat": None, "lon": None,
-                                "title": f"Demanda de {s['name']} {round(s['deviation'] * 100)} % el {s['date']}",
-                                "detail": f"{s['mwh']:,} MWh frente a ~{s['mean_prev']:,} MWh de media de los días previos (Red Eléctrica, dato diario con retraso)".replace(",", ".")})
-        return out
+            return list(self.nuclear)
 
     def _loop(self):
         while True:

@@ -14,8 +14,7 @@ def test_summarize_and_alert():
     assert s["deviation"] == -0.4 and s["mwh"] == 60
     rd = R.RedData(get=lambda u: RESP([100, 100, 100, 60]), cache="/tmp/rd_test.json")
     rd.refresh()
-    a = rd.alerts()
-    assert len(a) == 5 and a[0]["type"] == "red-electrica" and "-40 %" in a[0]["title"]
+    assert rd.view()["systems"]["canarias"]["deviation"] == -0.4
 
 
 def test_errors_are_tolerated():
@@ -23,7 +22,7 @@ def test_errors_are_tolerated():
         raise OSError("x")
     rd = R.RedData(get=bad, cache="/tmp/rd_test2.json")
     rd.refresh()
-    assert rd.view()["status"]["state"] == "error" and rd.alerts() == []
+    assert rd.view()["status"]["state"] == "error" 
 
 
 GEN = {"included": [

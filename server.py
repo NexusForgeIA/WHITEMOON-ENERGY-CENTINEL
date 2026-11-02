@@ -1,4 +1,4 @@
-"""WHITEMOON-ENERGY-CENTINEL: panel público de energía en España (informativo). Datos: Red Eléctrica (REData) y titulares de medios.
+"""WHITEMOON-ENERGY-CENTINEL: panel público de energía en España (informativo). Datos: Red Eléctrica (REData); alertas calculadas por reglas sobre esos datos.
 Python estándar, sin dependencias. Uso: python3 server.py --port 8080 ; RG_OFFLINE=1 para no consultar fuentes externas (pruebas)."""
 import argparse
 import json
@@ -9,13 +9,13 @@ import time
 import urllib.parse
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
-import alerts
+import rules
 import grid
 import risk
 import redata
 
 ROOT = os.path.dirname(os.path.abspath(__file__))
-ALERTS = RED = GRID = None
+RED = GRID = None
 
 
 def load_case(cid):
@@ -25,26 +25,34 @@ def load_case(cid):
         return None
 
 
+def rule_alerts():
+    if not RED:
+        return []
+    v = RED.view()
+    sites = [p for p in (GRID.view().get("plants") if GRID else []) if p.get("g") == "nuclear"]
+    try:
+        return rules.evaluate(v.get("realtime"), v.get("systems"), RED.nuclear_series(), sites, time.time(), redata.madrid_now().date())
+    except Exception:
+        return []
+
+
 def api(path, query):
     """Devuelve (status, objeto) o None si la ruta no es de la API."""
     if path == "/healthz":
         return 200, {"ok": True}
     if path == "/api/alertas":
-        a = ALERTS.alerts() if ALERTS else []
-        return 200, {"alerts": a, "status": ALERTS.status if ALERTS else {"state": "desactivado"},
-                     "source": "Titulares de medios (Google Noticias RSS). No es un aviso oficial; sin confirmar por el operador eléctrico."}
+        return 200, {"alerts": rule_alerts(), "rules": rules.RULES,
+                     "source": "Reglas calculadas con datos de Red Eléctrica (REData). Informativo; sin datos por central o subestación."}
     if path == "/api/red":
         return 200, GRID.view() if GRID else {"plants": [], "lines": [], "subs": [], "status": {"state": "desactivado"}}
     if path == "/api/control":
         v = RED.view() if RED else {}
-        al = (ALERTS.alerts() if ALERTS else []) + (RED.alerts() if RED else [])
-        return 200, risk.compute(v.get("realtime"), RED.price_now() if RED else None, al)
+        return 200, risk.compute(v.get("realtime"), RED.price_now() if RED else None, rule_alerts())
     if path == "/api/sistemas":
         return 200, RED.view() if RED else {"systems": {}, "status": {"state": "desactivado"}}
     if path == "/api/resumen":
         v = RED.view() if RED else {}
-        sysalerts = RED.alerts() if RED else []
-        return 200, {"alerts": (ALERTS.alerts() if ALERTS else []) + sysalerts, "systems": v.get("systems"), "generation": v.get("generation"),
+        return 200, {"alerts": rule_alerts(), "rules": rules.RULES, "systems": v.get("systems"), "generation": v.get("generation"),
                      "realtime": v.get("realtime"), "history": v.get("history"), "prices": v.get("prices"), "status": v.get("status"), "now": int(time.time() * 1000)}
     if path.startswith("/api/caso/"):
         c = load_case(path.rsplit("/", 1)[-1])
@@ -85,16 +93,14 @@ class H(BaseHTTPRequestHandler):
 
 
 def main():
-    global ALERTS, RED, GRID
+    global RED, GRID
     ap = argparse.ArgumentParser()
     ap.add_argument("--host", default="127.0.0.1")
     ap.add_argument("--port", type=int, default=int(os.environ.get("PORT", 8080)))
     a = ap.parse_args()
-    ALERTS = alerts.Energia(os.path.join(ROOT, "data", "alerts_cache.json"))
     GRID = grid.Grid(cache=os.path.join(ROOT, "data", "grid_cache.json"), use_seed=True)
     RED = redata.RedData(cache=os.path.join(ROOT, "data", "redata_cache.json"))
     if os.environ.get("RG_OFFLINE") != "1":
-        ALERTS.start()
         RED.start()
         GRID.start()
     else:

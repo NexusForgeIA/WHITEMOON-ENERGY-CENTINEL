@@ -4,11 +4,11 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>WhiteMoon Energía · Red eléctrica de España</title>
-<meta name="description" content="Panel informativo de la energía en España: demanda, generación, alertas de apagón y caso histórico del 28-A. Datos de Red Eléctrica (REData) y medios.">
+<meta name="description" content="Panel informativo de la energía en España: demanda, generación y reglas de caída calculadas con datos de Red Eléctrica (REData).">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Red-Sentinel">
 <meta property="og:title" content="Red-Sentinel · Energía en España">
-<meta property="og:description" content="Demanda, generación y alertas de apagón en España en tiempo real. Datos de Red Eléctrica (REData) y medios.">
+<meta property="og:description" content="Demanda, generación y reglas de caída de la red eléctrica en España. Datos de Red Eléctrica (REData).">
 <meta property="og:url" content="https://whitemoon-energy-centinel.onrender.com/">
 <meta property="og:image" content="https://whitemoon-energy-centinel.onrender.com/og-image.png">
 <meta property="og:image:width" content="1200">
@@ -96,13 +96,13 @@ footer{color:var(--mut);font-size:12px;padding:4px 6px 18px}
 <header>
   <img class="lg" src="/logo.png" alt="Red-Sentinel · Energy Monitoring Solutions" width="86" height="56">
   <h1>WHITEMOON · <b>ENERGÍA</b> ESPAÑA</h1>
-  <div class="sub">Panel informativo de la red eléctrica: demanda, generación y alertas de apagón. No es un aviso oficial.</div>
+  <div class="sub">Panel informativo de la red eléctrica: demanda, generación y reglas de caída calculadas con datos de Red Eléctrica. No es un aviso oficial.</div>
   <span class="pill" id="upd">cargando…</span>
 </header>
 <div id="banner" role="alert"></div>
 
-<section class="panel"><h2>Alertas de apagón</h2><div id="alerts"></div>
-  <div class="note">Detectadas a partir de titulares de medios (Google Noticias). Sin confirmar por el operador eléctrico. Red Eléctrica no publica a tiempo datos por isla o comarca.</div></section>
+<section class="panel"><h2>Reglas de caída</h2><div id="alerts"></div>
+  <div class="note">Calculadas con datos de Red Eléctrica, sin noticias. No hay datos públicos por central o subestación: las reglas miran la demanda peninsular (cada 5 min), cada sistema eléctrico (diario, con retraso) y la generación nuclear (diaria). Pueden saltar por festivos, mantenimientos o recargas programadas.</div></section>
 
 <section class="panel" id="ctl"><h2>Control de red · índice de vigilancia</h2><div id="ctlbox"><div class="note">Cargando…</div></div></section>
 
@@ -118,7 +118,7 @@ footer{color:var(--mut);font-size:12px;padding:4px 6px 18px}
 <section class="panel" id="precio"><h2>Precio de la luz · mercado mayorista</h2><div id="pbox"><div class="note">Cargando…</div></div></section>
 
 <footer>
-  Fuentes: Red Eléctrica de España, <a href="https://www.ree.es/es/datos/apidatos" target="_blank" rel="noopener">REData</a> (demanda y generación; Canarias, Baleares, Ceuta y Melilla solo con datos diarios y retraso) · titulares de medios vía Google Noticias (solo título, medio y enlace).
+  Fuentes: Red Eléctrica de España, <a href="https://www.ree.es/es/datos/apidatos" target="_blank" rel="noopener">REData</a> (demanda y generación; Canarias, Baleares, Ceuta y Melilla solo con datos diarios y retraso).
   Informativo, no certificado, solo datos públicos. No sustituye a los avisos de Red Eléctrica, Protección Civil ni de los operadores.
 </footer>
 
@@ -132,13 +132,11 @@ const fmt=n=>n==null?'—':Math.round(n).toLocaleString('es-ES');
 const pct=(d,dec)=>d==null?'':(d>=0?'+':'')+(d*100).toFixed(dec==null?1:dec).replace('.',',')+' %';
 const dm=s=>s?s.slice(8,10)+'/'+s.slice(5,7):'';
 const SC={peninsular:'#1b6fe0',canarias:'#f59e0b',baleares:'#0fb5a5',ceuta:'#8b5cf6',melilla:'#ec4899'};
-const ICO={energia:'⚡','red-electrica':'⚡'};
 
 function renderAlerts(list){
   const red=list.filter(a=>a.sev==='muy alta'),box=$('alerts'),b=$('banner');
-  if(red.length){b.style.display='flex';b.replaceChildren(h('span','ei','⚡'),h('div',null,null,[document.createTextNode('ALERTA DE ENERGÍA · '+red.map(a=>(a.place||a.title)).join(', ')),h('small',null,'Posible apagón detectado por titulares de medios. Sin confirmar por el operador eléctrico.')]));b.onclick=()=>$('alerts').scrollIntoView({behavior:'smooth',block:'center'})}else b.style.display='none';
-  box.replaceChildren(...(list.length?list.map(a=>{const r=a.sev==='muy alta',d=h('div','al'+(r?' red':''),null,[h('span','ic',ICO[a.type]||'⚡'),h('span','sv',r?'Alerta roja':a.sev),h('b',null,a.title),h('small',null,a.detail)]);
-    if(a.links&&a.links[0]&&/^https?:\/\//.test(a.links[0])){const l=h('a',null,' Ver titular ›');l.href=a.links[0];l.target='_blank';l.rel='noopener noreferrer';d.lastChild.appendChild(l)}return d}):[h('div','empty','✓ Sin apagones detectados en las últimas horas.')]));
+  if(red.length){b.style.display='flex';b.replaceChildren(h('span','ei','⚡'),h('div',null,null,[document.createTextNode('ALERTA ROJA · '+red.map(a=>a.title).join(' · ')),h('small',null,'Regla calculada con datos de Red Eléctrica. No es un aviso oficial ni confirma un apagón.')]));b.onclick=()=>$('alerts').scrollIntoView({behavior:'smooth',block:'center'})}else b.style.display='none';
+  box.replaceChildren(...(list.length?list.map(a=>{const r=a.sev==='muy alta',d=h('div','al'+(r?' red':''),null,[h('span','ic','⚡'),h('span','sv',r?'Alerta roja':'Atención'),h('b',null,a.title),h('small',null,a.detail)]);return d}):[h('div','empty','✓ Ninguna regla de caída activa con los datos actuales.')]));
 }
 
 function line(vals,w,hh,opts){opts=opts||{};const mx=opts.max||Math.max(...vals.filter(v=>v!=null),1),n=vals.length,pad=4;
@@ -236,7 +234,7 @@ function gauge(score,lvl){const W=300,H=170,cx=150,cy=150,R=120,r=94,A=a=>[cx+Ma
   const a=score/100,n=A(a),m=[cx+Math.cos(Math.PI*(1-a))*(r-10),cy-Math.sin(Math.PI*(1-a))*(r-10)];
   s.append(sv('line',{x1:cx,y1:cy,x2:m[0],y2:m[1],stroke:'#0f1b2d','stroke-width':4,'stroke-linecap':'round'}),sv('circle',{cx,cy,r:8,fill:'#0f1b2d'}),
     sv('text',{x:cx,y:cy-26,'text-anchor':'middle','font-size':34,'font-weight':800,fill:scol(score)},String(score)),sv('text',{x:cx-R,y:cy+16,class:'axis','text-anchor':'middle'},'0'),sv('text',{x:cx+R,y:cy+16,class:'axis','text-anchor':'middle'},'100'));return s}
-function fval(f){if(f.value==null||f.value==='')return '—';if(f.id==='press')return f.value;return (typeof f.value==='number'?f.value.toLocaleString('es-ES'):f.value)+' '+f.unit}
+function fval(f){if(f.value==null||f.value==='')return '—';if(f.id==='rules')return f.value||'ninguna';return (typeof f.value==='number'?f.value.toLocaleString('es-ES'):f.value)+' '+f.unit}
 function ctlChart(ser){const W=700,H=150,L=34,R=8,T=8,B=20,X=m=>L+m/1440*(W-L-R),Y=v=>T+(1-v/100)*(H-T-B),M=t=>+t.slice(0,2)*60+(+t.slice(3,5));
   const s=sv('svg',{viewBox:'0 0 '+W+' '+H,role:'img','aria-label':'Índice de vigilancia a lo largo de hoy'});
   [[0,25,0],[25,50,1],[50,75,2],[75,100,3]].forEach(([a,b,i])=>s.append(sv('rect',{x:L,y:Y(b),width:W-L-R,height:Y(a)-Y(b),fill:LVCOL[i],opacity:.08})));

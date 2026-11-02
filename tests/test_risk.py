@@ -31,14 +31,14 @@ def test_sudden_drop_is_critical():
     assert max(x["score"] for x in r["series"]) == 100 and r["series"][0]["score"] == 0
 
 
-def test_stale_press_and_price():
+def test_stale_rules_and_price():
     h = hist([30000] * 4)
     now = risk.ts_of(h[-1]["t"])
     assert risk.compute(rt_of(h), None, [], now=now + 30 * 60)["score"] == 30            # lectura vieja → atención
-    isla = [{"type": "energia", "sev": "muy alta", "place": "La Palma"}]
-    nac = [{"type": "energia", "sev": "muy alta", "place": "Península"}]
-    assert risk.compute(rt_of(h), None, isla, now=now)["score"] == 35
-    assert risk.compute(rt_of(h), None, nac, now=now)["level"] == "Crítico"
+    dia = [{"rule": "R-SYS", "sev": "alta"}]
+    rt = [{"rule": "R-DEM-DROP", "sev": "muy alta"}]
+    assert risk.compute(rt_of(h), None, dia, now=now)["score"] == 25
+    assert risk.compute(rt_of(h), None, rt, now=now)["level"] == "Crítico"
     r = risk.compute(rt_of(h), -5, [], now=now)
     assert r["score"] == 20 and r["level"] == "Normal"                                      # el precio solo es contexto
 
