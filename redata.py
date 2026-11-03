@@ -246,6 +246,7 @@ class RedData:
         today = madrid_now(self.now())
         start, end = (today - timedelta(days=8)).strftime("%Y-%m-%dT00:00"), today.strftime("%Y-%m-%dT23:59")
         start35 = (today - timedelta(days=35)).strftime("%Y-%m-%dT00:00")
+        gstart = (today - timedelta(days=11)).strftime("%Y-%m-%dT00:00")      # ventana más larga: REE publica con retraso y la media de 7 días necesita historia
         out, errs = {}, {}
         for sys_ in GEO:
             try:
@@ -260,12 +261,12 @@ class RedData:
         hist = []
         nuc = []
         try:
-            graw = self.get(url("generacion", "estructura-generacion", start, end, "day", "peninsular"))
+            graw = self.get(url("generacion", "estructura-generacion", gstart, end, "day", "peninsular"))
             gen, nuc = parse_generation(graw), parse_nuclear(graw)
         except Exception as ex:
             errs["generacion"] = str(ex)[:80]
         try:
-            em = parse_emissions(self.get(url("generacion", "no-renovables-detalle-emisiones-CO2", start, end, "day", "peninsular")))
+            em = parse_emissions(self.get(url("generacion", "no-renovables-detalle-emisiones-CO2", gstart, end, "day", "peninsular")))
             if gen and em:
                 gen["co2"] = em["series"]
         except Exception as ex:

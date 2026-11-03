@@ -255,7 +255,7 @@ function renderSys(sys,status){const b=$('sys');const ks=Object.keys(sys||{});
   if(!ks.length)b.replaceChildren()}
 
 function renderGen(g){const b=$('gen');if(!g){b.replaceChildren(h('div','note','Sin datos de generación todavía.'));return}
-  $('gdate').textContent='· '+dm(g.date)+' · '+fmt(g.total_mwh)+' MWh';
+  const age=Math.round((Date.now()-new Date(g.date+'T12:00:00'))/864e5);$('gdate').textContent='· '+dm(g.date)+' · '+fmt(g.total_mwh)+' MWh'+(age>=2?' · último dato publicado por REE (hace '+age+' días)':'');
   const es=(x,d=1)=>x.toLocaleString('es-ES',{maximumFractionDigits:d,minimumFractionDigits:d}),col=c=>/^#[0-9a-f]{3,8}$/i.test(c||'')?c:'#888';
   const mean=a=>{a=a.filter(x=>x!=null);return a.length?a.reduce((t,x)=>t+x,0)/a.length:null},prevm=a=>mean(a.slice(-8,-1));
   const dl=(v,unit,goodUp,thr)=>{if(v==null||!isFinite(v))return null;const q=Math.abs(v)<(thr||0.5)?'n':((v>0)===goodUp?'g':'r');return h('em','dl '+q,(v>0?'▲ +':v<0?'▼ −':'• ')+es(Math.abs(v))+' '+unit+' vs media 7 d')};
@@ -285,12 +285,12 @@ function renderGen(g){const b=$('gen');if(!g){b.replaceChildren(h('div','note','
       if(last||k===0)s.append(sv('text',{x:x+bw*0.32,y:y(v)-3,'text-anchor':'middle','font-size':9.5,'font-weight':700,fill:'var(--oktx)'},es(v*100,0)+' %'))});
     if(fs.length===rs.length)s.append(sv('polyline',{points:fs.map((v,k)=>(pl+k*bw+bw*0.5)+','+y(v)).join(' '),fill:'none',stroke:'#1b6fe0','stroke-width':2}),...fs.map((v,k)=>sv('circle',{cx:pl+k*bw+bw*0.5,cy:y(v),r:2.6,fill:'#1b6fe0'})));
     const lg=h('div','hleg',null,[['#0f9d6b','% renovable'],['#1b6fe0','% libre de CO₂']].map(([c,t])=>{const e=h('span','hl',null,[h('i'),tx(t)]);e.firstChild.style.background=c;return e}));
-    trend=h('div','gtrend',null,[h('small',null,'Últimos '+rs.length+' días'),s,lg])}
+    trend=h('div','gtrend',null,[h('small',null,'Últimos '+rs.length+' días con dato publicado (hasta el '+dm(ds[ds.length-1])+')'),s,lg])}
   const row=h('div','genrow',null,[d,hero,trend]);
   const bar=h('div','mix');g.items.forEach(i=>{const e=h('i');e.style.cssText='width:'+(i.mwh/g.total_mwh*100)+'%;background:'+col(i.color);e.title=i.name+': '+fmt(i.mwh)+' MWh';bar.appendChild(e)});
   const lg=h('div','legend');g.items.forEach(i=>{const dd=dpc(i.mwh,i.prev_mean),good=ren(i)||isNuc(i),c=dd==null||Math.abs(dd)<3?'n':((dd>0)===good?'g':'r');
     const e=h('div',null,null,[h('i'),h('span',null,i.name),h('em',null,es(i.mwh/g.total_mwh*100)+' %'),dd==null?null:h('em','dl '+c,Math.abs(dd)<0.5?'= 0 %':(dd>0?'▲ +':'▼ −')+es(Math.abs(dd),0)+' %')]);e.firstChild.style.background=col(i.color);e.title=i.name+': '+fmt(i.mwh)+' MWh'+(i.prev_mean?' (media 7 d: '+fmt(i.prev_mean)+' MWh)':'');lg.appendChild(e)});
-  b.replaceChildren(row,h('div','kcs',null,cards),bar,lg,h('div','note gnote','Variaciones frente a la media de los días previos (hasta 7). Intensidad y emisiones: REData, generación no renovable. Datos diarios con 2–3 días de retraso.'))}
+  b.replaceChildren(row,h('div','kcs',null,cards),bar,lg,h('div','note gnote','Variaciones frente a la media de los días previos (hasta 7). Intensidad y emisiones: REData, generación no renovable. Red Eléctrica publica estos datos con retraso (normalmente 2–3 días; a veces más), por eso el último día no es hoy.'))}
 
 const DOWN=['domingo','lunes','martes','miércoles','jueves','viernes','sábado'];
 const gwh=m=>(m/1000).toLocaleString('es-ES',{maximumFractionDigits:1,minimumFractionDigits:1});
