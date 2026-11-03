@@ -330,7 +330,7 @@ function ctlChart(ser){const W=700,H=150,L=34,R=8,T=8,B=20,X=m=>L+m/1440*(W-L-R)
   for(let hh=0;hh<=24;hh+=3)s.append(sv('text',{x:X(hh*60),y:H-4,class:'axis','text-anchor':hh===0?'start':hh===24?'end':'middle'},String(hh).padStart(2,'0')+'h'));
   if(ser.length){const pts=ser.map(x=>[X(M(x.t)),Y(x.score)]),d=pts.map((p,i)=>(i?'L':'M')+p[0].toFixed(1)+' '+p[1].toFixed(1)).join(' ');
     s.append(sv('path',{d:d+' L'+pts[pts.length-1][0]+' '+Y(0)+' L'+pts[0][0]+' '+Y(0)+'Z',fill:'#1b6fe0',opacity:.12}),sv('path',{d,fill:'none',stroke:'#1b6fe0','stroke-width':2.2,'stroke-linejoin':'round'}));
-    const lp=pts[pts.length-1],ls=ser[ser.length-1];s.append(sv('circle',{cx:lp[0],cy:lp[1],r:4,fill:scol(ls.score),stroke:'var(--card)','stroke-width':1.5}),sv('text',{x:lp[0]-9,y:lp[1]+5,class:'axis','text-anchor':'end'},'ahora '+ls.score));
+    const lp=pts[pts.length-1],ls=ser[ser.length-1];s.append(sv('circle',{cx:lp[0],cy:lp[1],r:4,fill:scol(ls.score),stroke:'var(--card)','stroke-width':1.5}),sv('text',{x:lp[0]-9,y:lp[1]+5,class:'axis','text-anchor':'end'},(window.__stale?'última '+ls.t+' · ':'ahora ')+ls.score));
     const mx=ser.reduce((a,x)=>x.score>a.score?x:a,ser[0]);if(mx.score>=25){const t=sv('title',{},mx.t+' · '+mx.score);s.append(sv('circle',{cx:X(M(mx.t)),cy:Y(mx.score),r:4.5,fill:scol(mx.score),stroke:'var(--card)','stroke-width':1.5},null));s.lastChild.appendChild(t)}}
   return s}
 function renderCtl(c){const b=$('ctlbox');if(!c||!c.factors){b.replaceChildren(h('div','note','Sin datos de control todavía.'));return}
@@ -340,9 +340,10 @@ function renderCtl(c){const b=$('ctlbox');if(!c||!c.factors){b.replaceChildren(h
     if(score!=null){const bar=h('div','bar',null,[h('i')]);bar.firstChild.style.width=Math.max(3,score)+'%';bar.firstChild.style.background=scol(score);e.append(bar)}if(hint)e.title=hint;return e};
   const lc=LVC(c.score),hero=h('div','hero hero'+lc,null,[gauge(c.score,c.level),h('div','lv lvc'+lc,c.level),
     h('div','why',c.driver?'Señal principal: '+c.driver+(c.driver_detail?' · '+c.driver_detail:''):'Sin señales de anomalía en la red'),
-    h('small',null,c.age_min==null?'':'Última lectura hace '+c.age_min+' min')]);
+    h('small',null,c.age_min==null?'':'Última lectura hace '+(c.age_min>=90?Math.floor(c.age_min/60)+' h '+(c.age_min%60)+' min':c.age_min+' min'))]);
+  const lt=ser.length?ser[ser.length-1].t:null;window.__stale=c.age_min!=null&&c.age_min>45;
   const nr=(c.rules||[]).length,kp=h('div','kcs',null,[
-    kc('Demanda ahora',c.mw==null?'—':fmt(c.mw)+' MW',(c.forecast_mw?'prevista '+fmt(c.forecast_mw)+' MW · ':'')+'última lectura, provisional',null),
+    kc('Demanda ahora',c.mw==null?'—':fmt(c.mw)+' MW',(c.forecast_mw?'prevista '+fmt(c.forecast_mw)+' MW · ':'')+(window.__stale&&lt?'lectura de las '+lt:'última lectura, provisional'),null),
     kc('Frente a la previsión',dev?sp(dev.value):'—','alarma en −12 %',dev&&dev.score,dev&&dev.hint),
     kc('Variación en 15 min',rp?sp(rp.value):'—','normal: ≤ 2 %',rp&&rp.score,rp&&rp.hint),
     kc('Oscilación última hora',osc&&osc.value!=null?fmt(osc.value)+' MW':'—','ámbar desde ~400 MW',osc&&osc.score,osc&&osc.hint),
@@ -350,10 +351,11 @@ function renderCtl(c){const b=$('ctlbox');if(!c||!c.factors){b.replaceChildren(h
     kc('Máximo del índice hoy',String(mx.score),mx.score?'a las '+mx.t:'sin picos',mx.score,'Valor más alto del índice en las lecturas de hoy.'),
     kc('Tiempo en alerta hoy',(n25*5)+' min',n50?(n50*5)+' min en nivel Alto':'sin llegar a Alto',n50?55:n25?30:0,'Minutos con el índice en Atención o más (lecturas de 5 min).'),
     kc('Avisos meteorológicos',mt?String((mt.value||'').split(' ')[0]+'/'+(mt.value||'').split('· ')[1].split(' ')[0]):'—','rojos / naranjas de viento, tormenta…',mt&&mt.score,mt&&mt.hint)]);
+  const stale=window.__stale&&lt?h('div','rc red',null,[h('b',null,'⚠ Sin lecturas nuevas '),tx('Red Eléctrica no publica demanda en tiempo real desde las '+lt+' (hora local). La gráfica llega hasta esa hora; el índice usa el último dato disponible y no refleja lo que pasa ahora.')]):null;
   const chips=h('div','rchips',null,nr?c.rules.map(x=>{const e=h('span','rc'+(x.sev==='muy alta'?' red':''),null,[h('b',null,x.rule),tx(' '+x.title)]);return e}):[h('span','rc ok',null,[tx('✓ Ninguna regla de caída activa')])]);
   const det=h('details',null,null,[h('summary',null,'Qué puede y qué no puede hacer este índice'),h('ul',null,null,[...c.limits.map(t=>h('li',null,t)),
     h('li',null,'Prueba con el apagón del 28-A: con las lecturas horarias publicadas, durante la mañana el índice no dio ninguna señal previa (siempre por debajo de 25) y la lectura de las 12:00, ya con el colapso dentro, marcó crítico (−46 % en una hora). Es decir: detecta, no anticipa.')])]);
-  b.replaceChildren(h('div','ctop',null,[hero,h('div',null,null,[kp,chips])]),h('div','ctlfoot',null,[h('div','note','Evolución del índice hoy (cada punto, una lectura de 5 min). Se calcula con lecturas consolidadas (de más de 25 min): Red Eléctrica publica las últimas como provisionales y las corrige a los pocos minutos.'),ctlChart(c.series||[]),det,
+  b.replaceChildren(h('div','ctop',null,[hero,h('div',null,null,[kp,stale,chips])]),h('div','ctlfoot',null,[h('div','note','Evolución del índice hoy (cada punto, una lectura de 5 min). Se calcula con lecturas consolidadas (de más de 25 min): Red Eléctrica publica las últimas como provisionales y las corrige a los pocos minutos.'),ctlChart(c.series||[]),det,
     h('div','note','Informativo, no certificado. No sustituye los avisos de Red Eléctrica ni de Protección Civil.')]))}
 async function loadCtl(){try{renderCtl(await j('/api/control'))}catch(e){}}
 
