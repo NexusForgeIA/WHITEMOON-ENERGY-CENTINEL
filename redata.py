@@ -272,7 +272,7 @@ class RedData:
         except Exception as ex:
             errs["emisiones"] = str(ex)[:80]
         try:
-            rt = parse_realtime(self.get(url("demanda", "demanda-tiempo-real", (today - timedelta(days=1)).strftime("%Y-%m-%dT00:00"), end, "hour")))
+            rt = parse_realtime(self._fresh(url("demanda", "demanda-tiempo-real", (today - timedelta(days=1)).strftime("%Y-%m-%dT00:00"), end, "hour")))
         except Exception as ex:
             errs["tiempo_real"] = str(ex)[:80]
         pr = self._fetch_prices(today, errs)
@@ -301,11 +301,15 @@ class RedData:
         except OSError:
             pass
 
+    def _fresh(self, u):
+        """REE sirve desde caché la MISMA url durante horas (se vio el tiempo real parado 5 h): un parámetro distinto cada 5 min fuerza dato fresco."""
+        return self.get(u + f"&cb={int(self.now() // 300)}")
+
     def _fetch_prices(self, today, errs):
         """Precios de hoy y, si ya están publicados, de mañana (el mercado diario los publica a primera hora de la tarde)."""
         for end in ((today + timedelta(days=1)).strftime("%Y-%m-%dT23:59"), today.strftime("%Y-%m-%dT23:59")):
             try:
-                return parse_prices(self.get(url("mercados", "precios-mercados-tiempo-real", today.strftime("%Y-%m-%dT00:00"), end, "hour")))
+                return parse_prices(self._fresh(url("mercados", "precios-mercados-tiempo-real", today.strftime("%Y-%m-%dT00:00"), end, "hour")))
             except Exception as ex:
                 errs["precios"] = str(ex)[:80]
         return None
@@ -315,7 +319,7 @@ class RedData:
         today, errs = madrid_now(self.now()), {}
         rt = None
         try:
-            rt = parse_realtime(self.get(url("demanda", "demanda-tiempo-real", (today - timedelta(days=1)).strftime("%Y-%m-%dT00:00"), today.strftime("%Y-%m-%dT23:59"), "hour")))
+            rt = parse_realtime(self._fresh(url("demanda", "demanda-tiempo-real", (today - timedelta(days=1)).strftime("%Y-%m-%dT00:00"), today.strftime("%Y-%m-%dT23:59"), "hour")))
         except Exception as ex:
             errs["tiempo_real"] = str(ex)[:80]
         pr = self._fetch_prices(today, errs)
