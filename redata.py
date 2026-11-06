@@ -45,6 +45,19 @@ def url(category, widget, start, end, trunc="day", system=None):
     return BASE + f"{category}/{widget}" + q
 
 
+def until_day(data, day):
+    """Quita de cada serie de la respuesta los días >= day (YYYY-MM-DD). Desde que se pide a REE con datos frescos, REE publica el día en curso INCOMPLETO
+    (06/11 a las 13:07: 423 GWh de generación y demanda a medias): comparado con un día entero daba alertas rojas falsas. Solo se usan días cerrados."""
+    if not isinstance(data, dict):
+        return data
+    inc = []
+    for it in data.get("included") or []:
+        a = dict(it.get("attributes") or {})
+        a["values"] = [v for v in a.get("values") or [] if (v.get("datetime") or "")[:10] < day]
+        inc.append({**it, "attributes": a})
+    return {**data, "included": inc}
+
+
 def daily_values(data):
     """Primera serie de un widget → [(datetime_iso, valor)]; vacía si la API devolvió un error."""
     inc = (data or {}).get("included") or []
@@ -250,6 +263,7 @@ class RedData:
 
     def refresh(self):
         today = madrid_now(self.now())
+        day0 = today.strftime("%Y-%m-%d")
         # end = el minuto actual (no 23:59): REE cachea la respuesta por ventana (start,end) y la sirve «HIT» durante horas con datos viejos; con end distinto cada vez devuelve datos frescos
         start, end = (today - timedelta(days=8)).strftime("%Y-%m-%dT00:00"), today.strftime("%Y-%m-%dT%H:%M")
         start35 = (today - timedelta(days=35)).strftime("%Y-%m-%dT00:00")
@@ -257,7 +271,7 @@ class RedData:
         out, errs = {}, {}
         for sys_ in GEO:
             try:
-                s = summarize(daily_values(self.get(url("demanda", "evolucion", start35, end, "day", sys_))))
+                s = summarize(daily_values(until_day(self.get(url("demanda", "evolucion", start35, end, "day", sys_)), day0)))
                 if s:
                     out[sys_] = {"name": NAMES[sys_], **s}
                 else:
@@ -268,12 +282,12 @@ class RedData:
         hist = []
         nuc = []
         try:
-            graw = self.get(url("generacion", "estructura-generacion", gstart, end, "day", "peninsular"))
+            graw = until_day(self.get(url("generacion", "estructura-generacion", gstart, end, "day", "peninsular")), day0)
             gen, nuc = parse_generation(graw), parse_nuclear(graw)
         except Exception as ex:
             errs["generacion"] = str(ex)[:80]
         try:
-            em = parse_emissions(self.get(url("generacion", "no-renovables-detalle-emisiones-CO2", gstart, end, "day", "peninsular")))
+            em = parse_emissions(until_day(self.get(url("generacion", "no-renovables-detalle-emisiones-CO2", gstart, end, "day", "peninsular")), day0))
             if gen and em:
                 gen["co2"] = _co2_per_kwh(em["series"], gen)
         except Exception as ex:
@@ -285,7 +299,7 @@ class RedData:
         pr = self._fetch_prices(today, errs)
         try:
             h0 = (today - timedelta(days=30)).strftime("%Y-%m-%dT00:00")
-            hist = [{"date": d[:10], "mwh": round(v)} for d, v in daily_values(self.get(url("demanda", "evolucion", h0, end, "day", "peninsular")))]
+            hist = [{"date": d[:10], "mwh": round(v)} for d, v in daily_values(until_day(self.get(url("demanda", "evolucion", h0, end, "day", "peninsular")), day0))]
         except Exception as ex:
             errs["historico"] = str(ex)[:80]
         with self.lock:

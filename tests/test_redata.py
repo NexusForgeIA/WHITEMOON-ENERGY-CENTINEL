@@ -111,3 +111,22 @@ def test_requests_use_current_minute_as_end_to_bypass_reree_cache():
     rd.refresh()
     ends = {u.split("end_date=")[1].split("&")[0] for u in urls if "end_date=" in u and "precios" not in u}
     assert ends == {"2026-11-06T14:00"} and not any("T23:59" in u for u in urls if "precios" not in u)
+
+
+def test_until_day_drops_the_unfinished_current_day():
+    d = {"included": [{"attributes": {"values": [{"value": 1, "datetime": "2026-11-05T00:00:00.000+01:00"}, {"value": 2, "datetime": "2026-11-06T00:00:00.000+01:00"}]}}]}
+    assert [v["value"] for v in R.until_day(d, "2026-11-06")["included"][0]["attributes"]["values"]] == [1]
+    assert R.until_day(None, "2026-11-06") is None
+
+
+def test_refresh_ignores_partial_today():
+    def vals(a, b):
+        return [{"value": a, "percentage": 1, "datetime": "2026-11-05T00:00:00.000+01:00"}, {"value": b, "percentage": 1, "datetime": "2026-11-06T00:00:00.000+01:00"}]
+
+    def resp(u):
+        return {"included": [{"attributes": {"title": "Eólica", "type": "Renovable", "values": vals(300000, 100000)}},
+                             {"attributes": {"title": "Generación total", "type": "total", "values": vals(700000, 300000)}}]}
+    rd = R.RedData(get=resp, cache="/tmp/rd_test6.json", now=lambda: 1793970000)  # 06/11 14:00 Madrid
+    rd.refresh()
+    v = rd.view()
+    assert v["generation"]["date"] == "2026-11-05" and v["systems"]["peninsular"]["date"] == "2026-11-05"
