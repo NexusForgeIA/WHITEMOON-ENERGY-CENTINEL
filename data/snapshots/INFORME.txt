@@ -1,0 +1,12 @@
+1 instantáneas · de 2026-11-06T12:02:20Z a 2026-11-06T12:02:20Z
+
+CORRECCIONES (primera publicación → última):
+  ninguna todavía
+
+FACTOR DE CO2 (g/kWh publicado por REE vs emisiones ÷ generación):
+  2026-11-01  REE 157 g/kWh · correcto 85 g/kWh
+  2026-11-02  REE 186 g/kWh · correcto 77 g/kWh
+  2026-11-03  REE 176 g/kWh · correcto 88 g/kWh
+  2026-11-04  REE 76 g/kWh · correcto 140 g/kWh
+  2026-11-05  REE 73 g/kWh · correcto 177 g/kWh
+  2026-11-06  REE 89 g/kWh · correcto 178 g/kWh
