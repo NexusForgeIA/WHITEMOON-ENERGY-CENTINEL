@@ -103,3 +103,11 @@ def test_refresh_attaches_co2_to_generation():
     rd = R.RedData(get=lambda u: em if "emisiones-CO2" in u else GEN2 if "estructura-generacion" in u else RESP([100] * 4), cache="/tmp/rd_test4.json")
     rd.refresh()
     assert rd.view()["generation"]["co2"] == [{"date": "2026-10-30", "t": 10, "g": 50}]  # 10 t / 200 MWh = 50 g/kWh, no el factor de REE (100)
+
+
+def test_requests_use_current_minute_as_end_to_bypass_reree_cache():
+    urls = []
+    rd = R.RedData(get=lambda u: urls.append(u) or RESP([100] * 4), cache="/tmp/rd_test5.json", now=lambda: 1793970000)  # = 2026-11-06 14:00 Madrid
+    rd.refresh()
+    ends = {u.split("end_date=")[1].split("&")[0] for u in urls if "end_date=" in u and "precios" not in u}
+    assert ends == {"2026-11-06T14:00"} and not any("T23:59" in u for u in urls if "precios" not in u)

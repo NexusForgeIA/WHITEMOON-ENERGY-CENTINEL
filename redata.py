@@ -250,7 +250,8 @@ class RedData:
 
     def refresh(self):
         today = madrid_now(self.now())
-        start, end = (today - timedelta(days=8)).strftime("%Y-%m-%dT00:00"), today.strftime("%Y-%m-%dT23:59")
+        # end = el minuto actual (no 23:59): REE cachea la respuesta por ventana (start,end) y la sirve «HIT» durante horas con datos viejos; con end distinto cada vez devuelve datos frescos
+        start, end = (today - timedelta(days=8)).strftime("%Y-%m-%dT00:00"), today.strftime("%Y-%m-%dT%H:%M")
         start35 = (today - timedelta(days=35)).strftime("%Y-%m-%dT00:00")
         gstart = (today - timedelta(days=11)).strftime("%Y-%m-%dT00:00")      # ventana más larga: REE publica con retraso y la media de 7 días necesita historia
         out, errs = {}, {}
@@ -308,7 +309,7 @@ class RedData:
             pass
 
     def _fresh(self, u):
-        """REE sirve desde caché la MISMA url durante horas (se vio el tiempo real parado 5 h): un parámetro distinto cada 5 min fuerza dato fresco."""
+        """REE sirve desde caché la MISMA ventana durante horas. Un parámetro extra (cb) NO cambia la clave de su caché (verificado 06/11: HIT igual); lo que sí la cambia es el minuto de end_date, que ya va distinto en cada petición. cb se deja por si acaso."""
         return self.get(u + f"&cb={int(self.now() // 300)}")
 
     def _fetch_prices(self, today, errs):
@@ -325,7 +326,7 @@ class RedData:
         today, errs = madrid_now(self.now()), {}
         rt = None
         try:
-            rt = parse_realtime(self._fresh(url("demanda", "demanda-tiempo-real", (today - timedelta(days=1)).strftime("%Y-%m-%dT00:00"), today.strftime("%Y-%m-%dT23:59"), "hour")))
+            rt = parse_realtime(self._fresh(url("demanda", "demanda-tiempo-real", (today - timedelta(days=1)).strftime("%Y-%m-%dT00:00"), today.strftime("%Y-%m-%dT%H:%M"), "hour")))
         except Exception as ex:
             errs["tiempo_real"] = str(ex)[:80]
         pr = self._fetch_prices(today, errs)

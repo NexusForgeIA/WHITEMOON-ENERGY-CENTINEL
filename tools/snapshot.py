@@ -29,8 +29,10 @@ def _by_day(data, pick):
 
 def collect(get=R._get, now=None):
     now = now or datetime.now(timezone.utc)
-    today = now.astimezone(timezone(timedelta(hours=1))).date()
-    start, end = (today - timedelta(days=10)).strftime("%Y-%m-%dT00:00"), today.strftime("%Y-%m-%dT23:59")
+    md = R.madrid_now(now.timestamp())
+    today = md.date()
+    # end = minuto actual: REE cachea por ventana (start,end) y sirve datos viejos «HIT» durante horas; un end distinto fuerza dato fresco
+    start, end = (today - timedelta(days=10)).strftime("%Y-%m-%dT00:00"), md.strftime("%Y-%m-%dT%H:%M")
     gen = _by_day(get(R.url("generacion", "estructura-generacion", start, end, "day", "peninsular")), lambda t, a: t)
     em = _by_day(get(R.url("generacion", "no-renovables-detalle-emisiones-CO2", start, end, "day", "peninsular")),
                  lambda t, a: "co2_t" if t == "Total tCO2 eq." else "co2_factor" if t == "tCO2 eq./MWh" else None)
