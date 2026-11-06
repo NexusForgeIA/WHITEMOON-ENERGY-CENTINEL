@@ -270,7 +270,7 @@ function renderGen(g){const b=$('gen');if(!g){b.replaceChildren(h('div','note','
   const gcol=v=>v<100?'#0f9d6b':v<180?'#e0a100':'#d6182a';
   const cards=[kc('Renovable',es(f*100)+' %','de la generación del día',dl(dpp(g.renewable_series||[f]),'pp',true),f,'#0f9d6b'),
     kc('Libre de CO₂',es(fr*100)+' %','renovable + nuclear',dl(dpp(g.free_series||[fr]),'pp',true),fr,'#1b6fe0'),
-    cl?kc('Intensidad de CO₂',fmt(cl.g)+' g/kWh','emitido por kWh generado',dl(dpc(cl.g,cprev),'%',false,2),Math.min(1,cl.g/400),gcol(cl.g)):kc('Intensidad de CO₂','—','sin dato de emisiones'),
+    cl?kc('Intensidad de CO₂',fmt(cl.g)+' g/kWh','CO₂ emitido ÷ generación total',dl(dpc(cl.g,cprev),'%',false,2),Math.min(1,cl.g/400),gcol(cl.g)):kc('Intensidad de CO₂','—','sin dato de emisiones'),
     cl?kc('Emisiones totales',fmt(cl.t)+' t','CO₂ eq. del día',dl(dpc(cl.t,tprev),'%',false,2)):kc('Emisiones totales','—','sin dato de emisiones')];
   [['solar fotovoltaica','Solar fotovoltaica',true],['eólica','Eólica',true],['nuclear','Nuclear',true]].forEach(([k,l,gu])=>{const i=tech(k);cards.push(i?kc(l,gw(i.mwh),share(i.mwh),dl(dpc(i.mwh,i.prev_mean),'%',gu,k==='nuclear'?2:3),i.mwh/g.total_mwh,col(i.color)):kc(l,'—','sin dato'))});
   cards.push(kc('Fósil y cogeneración',es(fosNow*100)+' %','ciclo combinado, carbón, cogeneración…',dl(dpp(fos.length?fos:[fosNow]),'pp',false),fosNow,'#e8651c'));
@@ -290,7 +290,7 @@ function renderGen(g){const b=$('gen');if(!g){b.replaceChildren(h('div','note','
   const bar=h('div','mix');g.items.forEach(i=>{const e=h('i');e.style.cssText='width:'+(i.mwh/g.total_mwh*100)+'%;background:'+col(i.color);e.title=i.name+': '+fmt(i.mwh)+' MWh';bar.appendChild(e)});
   const lg=h('div','legend');g.items.forEach(i=>{const dd=dpc(i.mwh,i.prev_mean),good=ren(i)||isNuc(i),c=dd==null||Math.abs(dd)<3?'n':((dd>0)===good?'g':'r');
     const e=h('div',null,null,[h('i'),h('span',null,i.name),h('em',null,es(i.mwh/g.total_mwh*100)+' %'),dd==null?null:h('em','dl '+c,Math.abs(dd)<0.5?'= 0 %':(dd>0?'▲ +':'▼ −')+es(Math.abs(dd),0)+' %')]);e.firstChild.style.background=col(i.color);e.title=i.name+': '+fmt(i.mwh)+' MWh'+(i.prev_mean?' (media 7 d: '+fmt(i.prev_mean)+' MWh)':'');lg.appendChild(e)});
-  b.replaceChildren(row,h('div','kcs',null,cards),bar,lg,h('div','note gnote','Variaciones frente a la media de los días previos (hasta 7). Intensidad y emisiones: REData, generación no renovable. Red Eléctrica publica estos datos con retraso (normalmente 2–3 días; a veces más), por eso el último día no es hoy.'))}
+  b.replaceChildren(row,h('div','kcs',null,cards),bar,lg,h('div','note gnote','Variaciones frente a la media de los días previos (hasta 7). Emisiones: REData (centrales no renovables); la intensidad se calcula como emisiones ÷ generación total del día. El último día puede corregirse al alza cuando REE lo consolida. Red Eléctrica publica estos datos con retraso (normalmente 2–3 días; a veces más), por eso el último día no es hoy.'))}
 
 const DOWN=['domingo','lunes','martes','miércoles','jueves','viernes','sábado'];
 const gwh=m=>(m/1000).toLocaleString('es-ES',{maximumFractionDigits:1,minimumFractionDigits:1});

@@ -143,6 +143,12 @@ def parse_emissions(data):
     return {"series": [{"date": d, "t": round(t[d]), "g": round(g[d] * 1000)} for d in ds]}
 
 
+def _co2_per_kwh(series, gen):
+    """El factor 'tCO2 eq./MWh' de REE no es coherente con su propio total (05/11: total +30 % y factor −51 %). Se calcula g/kWh = emisiones totales / generación total del mismo día; si no hay generación de ese día se conserva el factor de REE."""
+    tot = dict(zip(gen.get("dates") or [], gen.get("total_series") or []))
+    return [{**x, "g": round(x["t"] / tot[x["date"]] * 1000) if tot.get(x["date"]) else x["g"]} for x in series]
+
+
 def parse_nuclear(data):
     """estructura-generacion (día) → [(fecha, MWh)] de la tecnología nuclear."""
     for it in (data or {}).get("included") or []:
@@ -268,7 +274,7 @@ class RedData:
         try:
             em = parse_emissions(self.get(url("generacion", "no-renovables-detalle-emisiones-CO2", gstart, end, "day", "peninsular")))
             if gen and em:
-                gen["co2"] = em["series"]
+                gen["co2"] = _co2_per_kwh(em["series"], gen)
         except Exception as ex:
             errs["emisiones"] = str(ex)[:80]
         try:

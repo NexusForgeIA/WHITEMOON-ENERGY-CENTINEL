@@ -102,4 +102,4 @@ def test_refresh_attaches_co2_to_generation():
                        {"attributes": {"title": "tCO2 eq./MWh", "values": [{"value": 0.1, "datetime": _d(30)}]}}]}
     rd = R.RedData(get=lambda u: em if "emisiones-CO2" in u else GEN2 if "estructura-generacion" in u else RESP([100] * 4), cache="/tmp/rd_test4.json")
     rd.refresh()
-    assert rd.view()["generation"]["co2"] == [{"date": "2026-10-30", "t": 10, "g": 100}]
+    assert rd.view()["generation"]["co2"] == [{"date": "2026-10-30", "t": 10, "g": 50}]  # 10 t / 200 MWh = 50 g/kWh, no el factor de REE (100)
