@@ -143,6 +143,7 @@ details.pn>summary{cursor:pointer;font-weight:800;font-size:15px}
 
 <section class="panel"><h2>Qué significa para ti · cuándo consumir</h2><div id="tips"><div class="note">Cargando…</div></div></section>
 
+<section class="panel" id="marc"><h2>Marcador de aciertos · ¿cuántas alertas se confirman?</h2><div id="marcbox"><div class="note">Cargando…</div></div></section>
 <section class="panel"><h2>Historial de alertas y metodología</h2><div id="histal"><div class="note">Cargando…</div></div></section>
 
 <section class="panel"><details class="pn"><summary>🔦 Qué hacer ante un apagón (guía rápida)</summary>
@@ -380,6 +381,13 @@ function drawPrice(){const p=PDATA,b=$('pbox'),days=p.days.filter(d=>d.spot&&d.s
   b.replaceChildren(...[tabs,head,s,stats,h('div','note','Precio del mercado diario en €/MWh (sin peajes ni cargos), una barra cada 15 min. Verde: ≤ 5 €. El PVPC es la tarifa regulada del hogar. Fuente: REData.')].filter(Boolean))}
 
 async function j(u){const r=await fetch(u,{cache:'no-store'});if(!r.ok)throw new Error(r.status);return r.json()}
+const MST={pendiente:['⏳ Pendiente','Aún dentro del plazo de revisión de REE'],se_mantiene:['📉 Se mantiene','REE sigue publicando la caída tras revisar el dato (no prueba un apagón)'],corregida:['✅ Corregida por REE','El dato se completó: era un dato incompleto, no una caída real']};
+async function loadMarc(){const b=$('marcbox');try{const m=await j('/api/marcador'),st=m.stats||{},es=m.entries||[];
+  if(!es.length){b.replaceChildren(h('div','note','Todavía sin alertas registradas. Cada alerta diaria (regla R-SYS) se anota aquí y, a los 3 días, se comprueba si Red Eléctrica la corrigió o se mantiene.'));return}
+  const stats=h('div','stats',null,[tile('Alertas registradas',String(st.total||0),'desde que existe el marcador'),tile('Corregidas por REE',String(st.corregidas||0),st.pct_corregidas==null?'':st.pct_corregidas+' % de las cerradas'),tile('Se mantienen',String(st.se_mantiene||0),'caída aún en el dato de REE'),tile('Pendientes',String(st.pendientes||0),'en plazo de revisión')]);
+  const rows=es.slice(0,12).map(e=>{const t=MST[e.status]||[e.status,''];return h('div','note',null,[h('b',null,dm(e.date)+' · '+e.zone+' · '),tx((e.first_dev!=null?String(e.first_dev).replace('.',',')+' % al avisar':'')+(e.status==='se_mantiene'&&e.dev!=null?' → '+String(e.dev).replace('.',',')+' % hoy':'')+' — '+t[0]+'. '+t[1])])});
+  b.replaceChildren(stats,...rows,h('div','note','Sólo se contrastan las alertas diarias R-SYS (las de tiempo real peninsulares no se pueden verificar después). El marcador mide cuántos avisos eran datos incompletos, no predice apagones. Actualizado '+(m.updated||'—')+'.'))}catch(e){b.replaceChildren(h('div','note','Marcador no disponible.'))}}
+loadMarc();
 async function load(){try{const d=await j('/api/resumen');renderAlerts(d.alerts||[]);window.__alerts=d.alerts||[];window.mapaAlerts&&window.mapaAlerts(window.__alerts);renderRT(d.realtime);renderSys(d.systems);renderGen(d.generation);renderHist(d.history);renderPrice(d.prices);
   $('upd').textContent='actualizado '+new Date(d.now).toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'})}catch(e){$('upd').textContent='sin conexión'}}
 load();setInterval(load,120000);loadCtl();setInterval(loadCtl,60000);

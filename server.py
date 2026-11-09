@@ -53,6 +53,12 @@ def api(path, query):
     if path == "/api/historial":
         v = RED.view() if RED else {}
         return 200, rules.history(v.get("realtime"), v.get("systems"))
+    if path == "/api/marcador":
+        try:
+            m = json.load(open(os.path.join(ROOT, "data", "scoreboard.json"), encoding="utf-8"))
+        except (OSError, ValueError):
+            m = {"entries": [], "stats": {"total": 0, "pendientes": 0, "se_mantiene": 0, "corregidas": 0, "pct_corregidas": None}}
+        return 200, m
     if path == "/api/config":
         tg = os.environ.get("TELEGRAM_LINK")
         return 200, {"ntfy": {"topic": NTFY_TOPIC, "url": "https://ntfy.sh/" + NTFY_TOPIC}, "telegram": tg or None, "atom": "/alertas.atom", "site": SITE}

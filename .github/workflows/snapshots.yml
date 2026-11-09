@@ -13,9 +13,10 @@ jobs:
       - uses: actions/checkout@v4
       - run: python3 tools/snapshot.py
       - run: python3 tools/revisions.py > data/snapshots/INFORME.txt || true
+      - run: python3 tools/scoreboard.py || true
       - name: Commit
         run: |
           git config user.name "red-sentinel-bot"
           git config user.email "noreply@whitemoon.es"
-          git add data/snapshots
+          git add data/snapshots data/scoreboard.json
           git diff --cached --quiet || git commit -m "snapshot REData $(date -u +%Y-%m-%dT%H:%MZ)" && git push
