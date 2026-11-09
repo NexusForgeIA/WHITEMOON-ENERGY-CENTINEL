@@ -16,11 +16,19 @@ def load(folder):
     return snaps
 
 
+def _in_progress(taken, day):
+    """Lectura hecha antes de que acabe el día en España (medianoche = 23:00Z en invierno): el día sigue a medias."""
+    return taken < f"{day}T23:00:00Z"
+
+
 def revisions(snaps):
-    """→ {fecha: {métrica: {first, last, pct, n}}} sólo con las métricas que cambiaron."""
+    """→ {fecha: {métrica: {first, last, pct, n}}} sólo con las métricas que cambiaron.
+    Se ignoran las lecturas del propio día (publicado a medias): comparan medio día con un día entero."""
     first, last, count = {}, {}, {}
     for s in snaps:
         for d, row in s["days"].items():
+            if _in_progress(s["taken"], d):
+                continue
             for k, v in row.items():
                 if k not in first.setdefault(d, {}):
                     first[d][k] = (v, s["taken"])
@@ -51,7 +59,7 @@ def report(snaps):
         return "Sin instantáneas todavía."
     lines = [f"{len(snaps)} instantáneas · de {snaps[0]['taken']} a {snaps[-1]['taken']}", ""]
     rev = revisions(snaps)
-    lines.append("CORRECCIONES (primera publicación → última):")
+    lines.append("CORRECCIONES (primera publicación → última; sin lecturas del día a medias):")
     for d, ms in rev.items():
         for k, m in ms.items():
             lines.append(f"  {d}  {k:<20} {m['first']:>12,.1f} → {m['last']:>12,.1f}  ({m['pct']:+.1f} %)  visto por 1ª vez {m['since']}")

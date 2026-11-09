@@ -98,7 +98,7 @@ def system_rules(systems, today):
             continue
         sev = "muy alta" if dev <= -0.25 else "alta"
         out.append(_alert("R-SYS", k, sev, f"Demanda de {s['name']} {dev * 100:.0f} % el {d[8:10]}/{d[5:7]}".replace(".", ","),
-                          f"{n(s['mwh'])} MWh frente a ~{n(s['dow_mean'])} MWh (mediana de los 3 mismos días previos) y ~{n(s.get('near_mean') or s['dow_mean'])} MWh (media de los días recientes). Dato diario con retraso; un festivo puede explicarlo. Regla R-SYS: ámbar ≤ −10 %, roja ≤ −25 % frente a ambas.",
+                          f"{n(s['mwh'])} MWh frente a ~{n(s['dow_mean'])} MWh (mediana de los 3 mismos días previos) y ~{n(s.get('near_mean') or s['dow_mean'])} MWh (media de los días recientes). Dato diario con retraso: puede ser un dato incompleto de Red Eléctrica, un festivo local o una caída real; por sí solo no confirma un apagón. Regla R-SYS: ámbar ≤ −10 %, roja ≤ −25 % frente a ambas.",
                           round(dev * 100, 1), -10, d))
     return out
 
