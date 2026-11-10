@@ -1,6 +1,20 @@
 {
  "entries": [
   {
+   "id": "R-SYS-Canarias-2026-11-09",
+   "rule": "R-SYS",
+   "zone": "Canarias",
+   "date": "2026-11-09",
+   "sev": "muy alta",
+   "first_seen": "2026-11-10T02:47Z",
+   "first_dev": -42.4,
+   "first_mwh": 14959,
+   "dev": -42.4,
+   "mwh": 14959,
+   "status": "pendiente",
+   "checked": "2026-11-10T02:47Z"
+  },
+  {
    "id": "R-SYS-Canarias-2026-11-08",
    "rule": "R-SYS",
    "zone": "Canarias",
@@ -12,7 +26,7 @@
    "dev": -37.7,
    "mwh": 13878,
    "status": "pendiente",
-   "checked": "2026-11-09T18:56Z"
+   "checked": "2026-11-10T02:47Z"
   },
   {
    "id": "R-SYS-Baleares-2026-11-08",
@@ -26,7 +40,7 @@
    "dev": -10.4,
    "mwh": 12167,
    "status": "pendiente",
-   "checked": "2026-11-09T18:56Z"
+   "checked": "2026-11-10T02:47Z"
   },
   {
    "id": "R-SYS-Canarias-2026-11-07",
@@ -39,16 +53,16 @@
    "first_mwh": 14212,
    "dev": -43.0,
    "mwh": 14212,
-   "status": "pendiente",
-   "checked": "2026-11-09T18:56Z"
+   "status": "se_mantiene",
+   "checked": "2026-11-10T02:47Z"
   }
  ],
  "stats": {
-  "total": 3,
+  "total": 4,
   "pendientes": 3,
-  "se_mantiene": 0,
+  "se_mantiene": 1,
   "corregidas": 0,
-  "pct_corregidas": null
+  "pct_corregidas": 0
  },
- "updated": "2026-11-09T18:56Z"
+ "updated": "2026-11-10T02:47Z"
 }
