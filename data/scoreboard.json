@@ -9,10 +9,10 @@
    "first_seen": "2026-11-10T02:47Z",
    "first_dev": -42.4,
    "first_mwh": 14959,
-   "dev": -42.4,
+   "dev": null,
    "mwh": 14959,
-   "status": "pendiente",
-   "checked": "2026-11-10T02:47Z"
+   "status": "corregida",
+   "checked": "2026-11-10T12:47Z"
   },
   {
    "id": "R-SYS-Canarias-2026-11-08",
@@ -23,10 +23,10 @@
    "first_seen": "2026-11-09T18:56Z",
    "first_dev": -37.7,
    "first_mwh": 13878,
-   "dev": -37.7,
+   "dev": null,
    "mwh": 13878,
-   "status": "pendiente",
-   "checked": "2026-11-10T02:47Z"
+   "status": "corregida",
+   "checked": "2026-11-10T12:47Z"
   },
   {
    "id": "R-SYS-Baleares-2026-11-08",
@@ -40,7 +40,7 @@
    "dev": -10.4,
    "mwh": 12167,
    "status": "pendiente",
-   "checked": "2026-11-10T02:47Z"
+   "checked": "2026-11-10T12:47Z"
   },
   {
    "id": "R-SYS-Canarias-2026-11-07",
@@ -51,18 +51,18 @@
    "first_seen": "2026-11-09T18:56Z",
    "first_dev": -43.0,
    "first_mwh": 14212,
-   "dev": -43.0,
+   "dev": null,
    "mwh": 14212,
-   "status": "se_mantiene",
-   "checked": "2026-11-10T02:47Z"
+   "status": "corregida",
+   "checked": "2026-11-10T12:47Z"
   }
  ],
  "stats": {
   "total": 4,
-  "pendientes": 3,
-  "se_mantiene": 1,
-  "corregidas": 0,
-  "pct_corregidas": 0
+  "pendientes": 1,
+  "se_mantiene": 0,
+  "corregidas": 3,
+  "pct_corregidas": 100
  },
- "updated": "2026-11-10T02:47Z"
+ "updated": "2026-11-10T12:47Z"
 }
