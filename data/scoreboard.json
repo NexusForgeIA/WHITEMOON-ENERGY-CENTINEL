@@ -12,7 +12,7 @@
    "dev": null,
    "mwh": 14959,
    "status": "corregida",
-   "checked": "2026-11-12T07:25Z"
+   "checked": "2026-11-12T16:54Z"
   },
   {
    "id": "R-SYS-Canarias-2026-11-08",
@@ -26,7 +26,7 @@
    "dev": null,
    "mwh": 13878,
    "status": "corregida",
-   "checked": "2026-11-12T07:25Z"
+   "checked": "2026-11-12T16:54Z"
   },
   {
    "id": "R-SYS-Baleares-2026-11-08",
@@ -40,7 +40,7 @@
    "dev": -10.3,
    "mwh": 12167,
    "status": "se_mantiene",
-   "checked": "2026-11-12T07:25Z"
+   "checked": "2026-11-12T16:54Z"
   },
   {
    "id": "R-SYS-Canarias-2026-11-07",
@@ -54,7 +54,7 @@
    "dev": null,
    "mwh": 14212,
    "status": "corregida",
-   "checked": "2026-11-12T07:25Z"
+   "checked": "2026-11-12T16:54Z"
   }
  ],
  "stats": {
@@ -64,5 +64,5 @@
   "corregidas": 3,
   "pct_corregidas": 75
  },
- "updated": "2026-11-12T07:25Z"
+ "updated": "2026-11-12T16:54Z"
 }
