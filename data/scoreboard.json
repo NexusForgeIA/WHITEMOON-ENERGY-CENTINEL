@@ -12,7 +12,7 @@
    "dev": null,
    "mwh": 14959,
    "status": "corregida",
-   "checked": "2026-11-13T19:55Z"
+   "checked": "2026-11-14T00:55Z"
   },
   {
    "id": "R-SYS-Canarias-2026-11-08",
@@ -64,5 +64,5 @@
   "corregidas": 3,
   "pct_corregidas": 75
  },
- "updated": "2026-11-13T19:55Z"
+ "updated": "2026-11-14T00:55Z"
 }
