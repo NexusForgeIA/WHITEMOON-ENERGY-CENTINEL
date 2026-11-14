@@ -1,4 +1,4 @@
-24 instantáneas · de 2026-11-06T12:02:20Z a 2026-11-14T00:55:47Z
+25 instantáneas · de 2026-11-06T12:02:20Z a 2026-11-14T11:37:04Z
 
 CORRECCIONES (primera publicación → última; sin lecturas del día a medias):
   2026-11-02  co2_factor                    0.2 →          0.1  (-23.1 %)  visto por 1ª vez 2026-11-06T12:02:20Z
@@ -46,7 +46,7 @@ CORRECCIONES (primera publicación → última; sin lecturas del día a medias):
   2026-11-09  co2_factor                    0.1 →          0.1  (+85.2 %)  visto por 1ª vez 2026-11-10T02:47:55Z
   2026-11-09  co2_t                    45,531.7 →     56,029.4  (+23.1 %)  visto por 1ª vez 2026-11-10T02:47:55Z
   2026-11-10  co2_factor                    0.1 →          0.1  (-22.0 %)  visto por 1ª vez 2026-11-11T06:46:37Z
-  2026-11-11  co2_factor                    0.1 →          0.1  (-7.6 %)  visto por 1ª vez 2026-11-12T07:25:47Z
+  2026-11-11  co2_factor                    0.1 →          0.1  (+5.1 %)  visto por 1ª vez 2026-11-12T07:25:47Z
   2026-11-12  Carbón                    3,959.4 →      4,101.5  (+3.6 %)  visto por 1ª vez 2026-11-13T01:12:29Z
   2026-11-12  Ciclo combinado          66,112.7 →     87,258.9  (+32.0 %)  visto por 1ª vez 2026-11-13T01:12:29Z
   2026-11-12  Cogeneración             32,673.3 →     31,386.4  (-3.9 %)  visto por 1ª vez 2026-11-13T01:12:29Z
@@ -59,12 +59,28 @@ CORRECCIONES (primera publicación → última; sin lecturas del día a medias):
   2026-11-12  Residuos renovables       2,042.5 →      2,043.0  (+0.0 %)  visto por 1ª vez 2026-11-13T01:12:29Z
   2026-11-12  Solar fotovoltaica      107,685.5 →    103,417.9  (-4.0 %)  visto por 1ª vez 2026-11-13T01:12:29Z
   2026-11-12  Solar térmica             1,557.8 →      1,594.2  (+2.3 %)  visto por 1ª vez 2026-11-13T01:12:29Z
-  2026-11-12  co2_factor                    0.1 →          0.1  (-7.6 %)  visto por 1ª vez 2026-11-13T01:12:29Z
+  2026-11-12  co2_factor                    0.1 →          0.1  (-31.6 %)  visto por 1ª vez 2026-11-13T01:12:29Z
   2026-11-12  co2_t                    41,201.1 →     48,641.7  (+18.1 %)  visto por 1ª vez 2026-11-13T01:12:29Z
+  2026-11-13  Carbón                    4,865.4 →      5,197.9  (+6.8 %)  visto por 1ª vez 2026-11-14T00:55:47Z
+  2026-11-13  Ciclo combinado          83,138.7 →    104,587.9  (+25.8 %)  visto por 1ª vez 2026-11-14T00:55:47Z
+  2026-11-13  Cogeneración             37,225.6 →     36,689.2  (-1.4 %)  visto por 1ª vez 2026-11-14T00:55:47Z
+  2026-11-13  Eólica                  232,232.0 →    219,413.4  (-5.5 %)  visto por 1ª vez 2026-11-14T00:55:47Z
+  2026-11-13  Generación total        713,158.0 →    715,864.4  (+0.4 %)  visto por 1ª vez 2026-11-14T00:55:47Z
+  2026-11-13  Hidráulica               78,012.8 →     80,592.8  (+3.3 %)  visto por 1ª vez 2026-11-14T00:55:47Z
+  2026-11-13  Nuclear                 145,438.8 →    145,413.8  (-0.0 %)  visto por 1ª vez 2026-11-14T00:55:47Z
+  2026-11-13  Otras renovables         11,490.5 →     11,176.6  (-2.7 %)  visto por 1ª vez 2026-11-14T00:55:47Z
+  2026-11-13  Residuos no renovables      2,628.4 →      2,623.8  (-0.2 %)  visto por 1ª vez 2026-11-14T00:55:47Z
+  2026-11-13  Residuos renovables       2,058.2 →      2,079.4  (+1.0 %)  visto por 1ª vez 2026-11-14T00:55:47Z
+  2026-11-13  Solar fotovoltaica      110,924.5 →    105,244.2  (-5.1 %)  visto por 1ª vez 2026-11-14T00:55:47Z
+  2026-11-13  Solar térmica             2,199.1 →      1,751.8  (-20.3 %)  visto por 1ª vez 2026-11-14T00:55:47Z
+  2026-11-13  Turbina de vapor          2,944.0 →      1,093.5  (-62.9 %)  visto por 1ª vez 2026-11-14T00:55:47Z
+  2026-11-13  co2_factor                    0.1 →          0.1  (-11.4 %)  visto por 1ª vez 2026-11-14T00:55:47Z
+  2026-11-13  co2_t                    51,568.7 →     58,602.7  (+13.6 %)  visto por 1ª vez 2026-11-14T00:55:47Z
 
 FACTOR DE CO2 (g/kWh publicado por REE vs emisiones ÷ generación):
   2026-11-09  REE 113 g/kWh · correcto 76 g/kWh
   2026-11-10  REE 64 g/kWh · correcto 82 g/kWh
-  2026-11-11  REE 73 g/kWh · correcto 117 g/kWh
-  2026-11-12  REE 73 g/kWh · correcto 63 g/kWh
-  2026-11-13  REE 88 g/kWh · correcto 72 g/kWh
+  2026-11-11  REE 83 g/kWh · correcto 117 g/kWh
+  2026-11-12  REE 54 g/kWh · correcto 63 g/kWh
+  2026-11-13  REE 78 g/kWh · correcto 82 g/kWh
+  2026-11-14  REE 184 g/kWh · correcto 123 g/kWh
