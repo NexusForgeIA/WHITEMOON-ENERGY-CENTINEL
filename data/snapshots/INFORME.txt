@@ -1,4 +1,4 @@
-36 instantáneas · de 2026-11-06T12:02:20Z a 2026-11-18T07:42:24Z
+37 instantáneas · de 2026-11-06T12:02:20Z a 2026-11-18T17:21:45Z
 
 CORRECCIONES (primera publicación → última; sin lecturas del día a medias):
   2026-11-02  co2_factor                    0.2 →          0.1  (-23.1 %)  visto por 1ª vez 2026-11-06T12:02:20Z
