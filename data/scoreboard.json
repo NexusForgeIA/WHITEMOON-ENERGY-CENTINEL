@@ -1,6 +1,20 @@
 {
  "entries": [
   {
+   "id": "R-SYS-Canarias-2026-11-21",
+   "rule": "R-SYS",
+   "zone": "Canarias",
+   "date": "2026-11-21",
+   "sev": "muy alta",
+   "first_seen": "2026-11-22T07:06Z",
+   "first_dev": -43.3,
+   "first_mwh": 13849,
+   "dev": -43.3,
+   "mwh": 13849,
+   "status": "pendiente",
+   "checked": "2026-11-22T07:06Z"
+  },
+  {
    "id": "R-SYS-Canarias-2026-11-15",
    "rule": "R-SYS",
    "zone": "Canarias",
@@ -86,11 +100,11 @@
   }
  ],
  "stats": {
-  "total": 6,
-  "pendientes": 0,
+  "total": 7,
+  "pendientes": 1,
   "se_mantiene": 1,
   "corregidas": 5,
   "pct_corregidas": 83
  },
- "updated": "2026-11-20T17:02Z"
+ "updated": "2026-11-22T07:06Z"
 }
