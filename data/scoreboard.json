@@ -12,7 +12,7 @@
    "dev": -43.3,
    "mwh": 13849,
    "status": "pendiente",
-   "checked": "2026-11-22T07:06Z"
+   "checked": "2026-11-22T16:26Z"
   },
   {
    "id": "R-SYS-Canarias-2026-11-15",
@@ -106,5 +106,5 @@
   "corregidas": 5,
   "pct_corregidas": 83
  },
- "updated": "2026-11-22T07:06Z"
+ "updated": "2026-11-22T16:26Z"
 }
