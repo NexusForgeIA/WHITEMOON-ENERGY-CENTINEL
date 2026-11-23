@@ -9,10 +9,10 @@
    "first_seen": "2026-11-23T00:57Z",
    "first_dev": -38.8,
    "first_mwh": 13193,
-   "dev": -38.8,
+   "dev": null,
    "mwh": 13193,
-   "status": "pendiente",
-   "checked": "2026-11-23T00:57Z"
+   "status": "corregida",
+   "checked": "2026-11-23T14:56Z"
   },
   {
    "id": "R-SYS-Canarias-2026-11-21",
@@ -23,10 +23,10 @@
    "first_seen": "2026-11-22T07:06Z",
    "first_dev": -43.3,
    "first_mwh": 13849,
-   "dev": -43.3,
+   "dev": null,
    "mwh": 13849,
-   "status": "pendiente",
-   "checked": "2026-11-23T00:57Z"
+   "status": "corregida",
+   "checked": "2026-11-23T14:56Z"
   },
   {
    "id": "R-SYS-Canarias-2026-11-15",
@@ -115,10 +115,10 @@
  ],
  "stats": {
   "total": 8,
-  "pendientes": 2,
+  "pendientes": 0,
   "se_mantiene": 1,
-  "corregidas": 5,
-  "pct_corregidas": 83
+  "corregidas": 7,
+  "pct_corregidas": 88
  },
- "updated": "2026-11-23T00:57Z"
+ "updated": "2026-11-23T14:56Z"
 }
